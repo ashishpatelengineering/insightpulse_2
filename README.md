@@ -44,31 +44,6 @@ Five generated datasets are in `backend/data/samples`. They use different column
 - `sample_online_fashion.csv`
 - `sample_wholesale_cafe_supplies.csv`
 
-Regenerate them with `python tools/generate_samples.py`.
-
-## Run locally
-
-```bash
-# back end
-cd backend
-pip install -r requirements.txt
-uvicorn app.main:app --port 8000
-
-# front end (second terminal)
-cd frontend
-npm install
-npm run dev          # http://localhost:5173, proxies /api to port 8000
-```
-
-To serve everything from one process, run `npm run build` in `frontend`, then start uvicorn. The API serves `frontend/dist` automatically.
-
-## Tests
-
-```bash
-cd backend && python -m pytest -q
-cd frontend && npm test
-```
-
 ## Deploy to Render
 
 1. Push this folder to a GitHub repository.

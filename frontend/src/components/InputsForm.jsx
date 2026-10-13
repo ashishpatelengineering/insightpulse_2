@@ -75,7 +75,7 @@ export default function InputsForm({ mode }) {
   });
 
   return (
-    <section className="card inputs-card" aria-labelledby={`inputs-${mode.id}`}>
+    <section className="card inputs-card" aria-labelledby={`inputs-${mode.id}`} id={`inputs-${mode.id}-card`}>
       <h2 id={`inputs-${mode.id}`} className="card-title">
         Inputs
       </h2>
@@ -128,7 +128,7 @@ export default function InputsForm({ mode }) {
               <div className="field" key={field.key}>
                 <label htmlFor={id}>{field.label}</label>
                 <ColumnSelect id={id} field={field} value={current[field.key]} columns={columns} disabled={disabled} onChange={(v) => setSelection(mode.id, field.key, v)} />
-                <p className={`hint${duplicate ? " error" : ""}`}>{duplicate ? "This column is already used by another input." : field.hint}</p>
+                <p className={`hint${duplicate ? " error" : ""}`}>{duplicate ? "Already used by another input." : field.hint}</p>
               </div>
             );
           })}
@@ -136,12 +136,12 @@ export default function InputsForm({ mode }) {
         <div className="form-footer">
           <p className="footer-note" aria-live="polite">
             {!dataset
-              ? "Upload a CSV file or choose sample data to begin."
+              ? "Upload a CSV file or choose sample data."
               : duplicates.size > 0
               ? "Each input needs a different column."
               : problems.length > 0
               ? problems[0]
-              : "Everything looks good. Click Analyze to continue."}
+              : "Ready to analyze."}
           </p>
           <button type="submit" className="btn btn-primary" disabled={!canAnalyze || duplicates.size > 0}>
             {running ? "Analyzing..." : "Analyze"}

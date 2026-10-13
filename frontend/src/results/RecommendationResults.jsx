@@ -1,29 +1,47 @@
 import { useMemo, useState } from "react";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { downloadCsv } from "../lib/csv.js";
-import { compactNumber, formatNumber } from "../lib/format.js";
+import { formatNumber } from "../lib/format.js";
 import { DownloadIcon } from "../components/Icons.jsx";
-import { Alert, Block, Insights, KpiCard, KpiRow, Notes } from "../components/ui.jsx";
+import { Alert, Block, KpiCard, KpiRow, Notes } from "../components/ui.jsx";
+
+
+const VERDICT_TEXT = {
+  better: "Personalized suggestions found the hidden purchase more often than the most popular products.",
+  similar: "Personalized suggestions performed about the same as the most popular products.",
+  worse: "The most popular products found the hidden purchase more often than personalized suggestions.",
+};
+
+function AccuracyTest({ validation }) {
+  if (!validation) {
+    return (
+      <Block title="Reliability of the suggestions">
+        <p className="muted">Testing needs at least 30 customers who have bought 3 or more different products.</p>
+      </Block>
+    );
+  }
+  return (
+    <Block
+      title="Reliability of the suggestions"
+      subtitle={`Tested on ${formatNumber(validation.customers_tested)} customers.`}
+    >
+      <div className="kpi-row">
+        <KpiCard label="Suggestions" value={`${validation.model_hit_pct.toFixed(0)}%`} sub="hit rate" />
+        <KpiCard label="Most popular products" value={`${validation.bestseller_hit_pct.toFixed(0)}%`} sub="hit rate" />
+      </div>
+      <p className={`verdict verdict-${validation.verdict}`}>{VERDICT_TEXT[validation.verdict]}</p>
+      <p className="muted small-print">
+        Share of customers whose hidden purchase appears in their top 5 suggestions, compared with the most popular products.
+      </p>
+    </Block>
+  );
+}
 
 export default function RecommendationResults({ data }) {
-  const { kpis, customers, top_products: topProducts, insights, warnings } = data;
-  const [selectedId, setSelectedId] = useState(customers[0]?.customer_id || "");
-  const [typed, setTyped] = useState(customers[0]?.customer_id || "");
+  const { kpis, customers, warnings, validation } = data;
+  const [typed, setTyped] = useState((customers.find((c) => c.recommendations.length >= 5) || customers[0])?.customer_id || "");
 
   const byId = useMemo(() => new Map(customers.map((c) => [c.customer_id, c])), [customers]);
-  const customer = byId.get(selectedId);
-
-  const choose = (value) => {
-    setTyped(value);
-    const match = byId.get(value.trim());
-    if (match) setSelectedId(match.customer_id);
-  };
-
-  const randomCustomer = () => {
-    const pick = customers[Math.floor(Math.random() * customers.length)];
-    setSelectedId(pick.customer_id);
-    setTyped(pick.customer_id);
-  };
+  const customer = byId.get(typed.trim());
 
   const downloadAll = () => {
     const rows = customers.flatMap((c) => c.recommendations.map((r, index) => ({ customer: c.customer_id, rank: index + 1, ...r })));
@@ -31,14 +49,12 @@ export default function RecommendationResults({ data }) {
       { label: "Customer", value: (r) => r.customer },
       { label: "Rank", value: (r) => r.rank },
       { label: "Recommended product", value: (r) => r.product },
-      { label: "Category", value: (r) => r.category },
-      { label: "Sub category", value: (r) => r.sub_category },
+      ...(kpis.has_category ? [{ label: "Category", value: (r) => r.category }] : []),
+      ...(kpis.has_sub_category ? [{ label: "Sub category", value: (r) => r.sub_category }] : []),
       { label: "Match (%)", value: (r) => (r.match_pct === null ? "" : r.match_pct) },
       { label: "Why", value: (r) => r.reason },
     ]);
   };
-
-  const chartData = [...topProducts].reverse().map((p) => ({ name: p.product, Revenue: p.revenue }));
 
   return (
     <div className="results">
@@ -46,12 +62,12 @@ export default function RecommendationResults({ data }) {
         <KpiCard label="Customers" value={formatNumber(kpis.customers)} />
         <KpiCard label="Products" value={formatNumber(kpis.products)} />
         <KpiCard label="Products bought per customer" value={formatNumber(kpis.avg_products_per_customer, 1)} sub="on average" />
-        <KpiCard label="Total sales" value={formatNumber(kpis.total_revenue)} />
+        {kpis.total_revenue !== null && <KpiCard label="Total sales" value={formatNumber(kpis.total_revenue)} />}
       </KpiRow>
 
       <Block
         title="Recommendations for a customer"
-        subtitle="Type or choose a customer to see the five products they are most likely to want next."
+        subtitle="Choose a customer to see their suggested products."
         actions={
           <button type="button" className="btn btn-ghost small" onClick={downloadAll}>
             <DownloadIcon /> Download all recommendations
@@ -60,31 +76,31 @@ export default function RecommendationResults({ data }) {
       >
         <div className="picker">
           <label htmlFor="customer-picker">Customer ID</label>
-          <input id="customer-picker" list="customer-options" value={typed} onChange={(event) => choose(event.target.value)} placeholder="Type or choose a customer" autoComplete="off" />
+          <input id="customer-picker" list="customer-options" value={typed} onChange={(event) => setTyped(event.target.value)} placeholder="Type or choose a customer" autoComplete="off" />
           <datalist id="customer-options">
             {customers.map((c) => (
               <option key={c.customer_id} value={c.customer_id} />
             ))}
           </datalist>
-          <button type="button" className="btn btn-ghost small" onClick={() => choose(customers[0].customer_id)}>
-            Top spender
-          </button>
-          <button type="button" className="btn btn-ghost small" onClick={randomCustomer}>
-            Random customer
-          </button>
         </div>
 
         {!customer ? (
-          <Alert tone="info">No customer with that ID was found. Choose one from the list. Customers are listed from highest to lowest spend.</Alert>
+          <Alert tone="info">
+            {typed.trim() === ""
+              ? "Type or choose a customer ID to see their suggested products."
+              : "No match yet. Choose a customer ID from the list."}
+          </Alert>
         ) : (
           <div className="rec-layout">
             <aside className="rec-side">
               <h4>Customer {customer.customer_id}</h4>
               <dl className="stat-list">
-                <div>
-                  <dt>Total spend</dt>
-                  <dd>{formatNumber(customer.total_spend, 2)}</dd>
-                </div>
+                {customer.total_spend !== null && (
+                  <div>
+                    <dt>Total spend</dt>
+                    <dd>{formatNumber(customer.total_spend, 2)}</dd>
+                  </div>
+                )}
                 <div>
                   <dt>Different products bought</dt>
                   <dd>{formatNumber(customer.products_bought)}</dd>
@@ -93,21 +109,24 @@ export default function RecommendationResults({ data }) {
               <h5>Buys most often</h5>
               <ul className="chips">
                 {customer.top_purchases.map((p) => (
-                  <li key={p.product} title={`${p.category} / ${p.sub_category}`}>
+                  <li key={p.product} title={[kpis.has_category && p.category, kpis.has_sub_category && p.sub_category].filter(Boolean).join(" / ") || undefined}>
                     {p.product}
                   </li>
                 ))}
               </ul>
             </aside>
             <div className="rec-main">
+              {customer.recommendations.length === 0 && (
+                <Alert tone="info">This customer has bought every product in the file.</Alert>
+              )}
               <div className="table-scroll">
                 <table className="table">
                   <thead>
                     <tr>
                       <th>#</th>
                       <th>Recommended product</th>
-                      <th>Category</th>
-                      <th>Sub category</th>
+                      {kpis.has_category && <th>Category</th>}
+                      {kpis.has_sub_category && <th>Sub category</th>}
                       <th className="num">Match</th>
                       <th>Why this product</th>
                     </tr>
@@ -119,47 +138,23 @@ export default function RecommendationResults({ data }) {
                         <td>
                           <strong>{r.product}</strong>
                         </td>
-                        <td>{r.category}</td>
-                        <td>{r.sub_category}</td>
-                        <td className="num">
-                          {r.match_pct === null ? (
-                            "Popular pick"
-                          ) : (
-                            <span className="match">
-                              <span className="match-bar">
-                                <span style={{ width: `${r.match_pct}%` }} />
-                              </span>
-                              {r.match_pct}%
-                            </span>
-                          )}
-                        </td>
+                        {kpis.has_category && <td>{r.category}</td>}
+                        {kpis.has_sub_category && <td>{r.sub_category}</td>}
+                        <td className="num">{r.match_pct === null ? "Popular" : `${r.match_pct}%`}</td>
                         <td className="muted">{r.reason}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <p className="muted small-print">Match shows how closely a product fits what this customer already buys. Higher is a better fit.</p>
+              <p className="muted small-print">Match: similarity score from 0 to 100. Popular: a product many customers buy, shown when the customer has little history.</p>
             </div>
           </div>
         )}
       </Block>
 
-      <Block title="Best selling products" subtitle="Top 10 products by sales value.">
-        <div className="chart" style={{ height: 340 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} layout="vertical" margin={{ top: 4, right: 24, left: 8, bottom: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e9f0" />
-              <XAxis type="number" tickFormatter={compactNumber} tickLine={false} axisLine={{ stroke: "#cfd6e0" }} />
-              <YAxis type="category" dataKey="name" width={170} tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
-              <Tooltip formatter={(value) => formatNumber(value, 2)} cursor={{ fill: "rgba(11,94,168,0.06)" }} />
-              <Bar dataKey="Revenue" fill="#0b5ea8" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </Block>
+      <AccuracyTest validation={validation} />
 
-      <Insights items={insights} />
       <Notes items={warnings} />
     </div>
   );

@@ -1,4 +1,4 @@
-"""Generate three realistic sample datasets for InsightPulse.
+"""Generate five realistic sample datasets for InsightPulse.
 
 Each dataset has a different column naming style and date format, but every one
 contains everything needed by all four modes (CLV, Product Recommendation,
@@ -47,6 +47,9 @@ class Config:
     customer_start: int
     invoice_start: int
     weekend_boost: float = 1.0
+    sep: str = ","
+    decimal: str = "."
+    return_rate: float = 0.0  # share of lines that come back later as a negative row
 
 
 DS_OFFICE = Config(
@@ -316,6 +319,169 @@ DS_ELECTRONICS = Config(
 )
 
 
+DS_FASHION = Config(
+    key="online_fashion",
+    filename="sample_online_fashion.csv",
+    seed=44,
+    n_customers=1100,
+    invoices_by_tier={"low": (1, 3), "mid": (4, 7), "high": (8, 15)},
+    tier_probs=(0.55, 0.33, 0.12),
+    products=[
+        ("Classic White T-Shirt", "Tops", "T-Shirts", 19.90, 8),
+        ("Graphic Print T-Shirt", "Tops", "T-Shirts", 24.90, 5),
+        ("Oxford Button Shirt", "Tops", "Shirts", 49.90, 4),
+        ("Linen Summer Shirt", "Tops", "Shirts", 44.90, 3),
+        ("Merino Crew Sweater", "Tops", "Knitwear", 79.90, 3),
+        ("Chunky Knit Cardigan", "Tops", "Knitwear", 69.90, 3),
+        ("Slim Fit Jeans", "Bottoms", "Jeans", 69.90, 6),
+        ("Straight Leg Jeans", "Bottoms", "Jeans", 64.90, 5),
+        ("Stretch Chinos", "Bottoms", "Trousers", 54.90, 4),
+        ("Pleated Midi Skirt", "Bottoms", "Skirts", 49.90, 3),
+        ("Jersey Joggers", "Bottoms", "Trousers", 39.90, 4),
+        ("Denim Jacket", "Outerwear", "Jackets", 89.90, 3),
+        ("Bomber Jacket", "Outerwear", "Jackets", 99.90, 2),
+        ("Wool Blend Coat", "Outerwear", "Coats", 189.00, 1.5),
+        ("Quilted Puffer Coat", "Outerwear", "Coats", 149.00, 2),
+        ("Waterproof Parka", "Outerwear", "Coats", 169.00, 1.5),
+        ("Leather Sneakers", "Footwear", "Casual Shoes", 89.00, 5),
+        ("Canvas Sneakers", "Footwear", "Casual Shoes", 49.00, 5),
+        ("Running Shoes", "Footwear", "Sport Shoes", 99.00, 4),
+        ("Chelsea Boots", "Footwear", "Boots", 119.00, 2),
+        ("Ankle Boots", "Footwear", "Boots", 109.00, 2),
+        ("Leather Belt", "Accessories", "Belts and Wallets", 29.90, 4),
+        ("Slim Leather Wallet", "Accessories", "Belts and Wallets", 34.90, 3),
+        ("Canvas Tote Bag", "Accessories", "Bags", 29.90, 4),
+        ("Everyday Backpack", "Accessories", "Bags", 59.90, 3),
+        ("Wool Scarf", "Accessories", "Scarves and Hats", 24.90, 3),
+        ("Knit Beanie", "Accessories", "Scarves and Hats", 17.90, 3),
+        ("Cotton Crew Socks 5-Pack", "Accessories", "Basics", 14.90, 7),
+        ("Sunglasses Classic", "Accessories", "Eyewear", 39.90, 3),
+    ],
+    bundles=[
+        ("Classic White T-Shirt", "Slim Fit Jeans"),
+        ("Oxford Button Shirt", "Stretch Chinos"),
+        ("Wool Scarf", "Knit Beanie"),
+        ("Wool Blend Coat", "Wool Scarf"),
+        ("Leather Sneakers", "Cotton Crew Socks 5-Pack"),
+        ("Running Shoes", "Jersey Joggers"),
+        ("Chelsea Boots", "Leather Belt"),
+        ("Denim Jacket", "Graphic Print T-Shirt"),
+        ("Leather Belt", "Slim Leather Wallet"),
+        ("Quilted Puffer Coat", "Knit Beanie"),
+    ],
+    bundle_prob=0.5,
+    extra_mean=0.7,
+    qty_lambda={"Tops": 0.2, "Bottoms": 0.1, "Outerwear": 0.03, "Footwear": 0.05, "Accessories": 0.3},
+    seasonality=[0.80, 0.75, 0.90, 1.00, 1.00, 0.95, 0.90, 0.95, 1.05, 1.15, 1.65, 1.70],
+    monthly_growth=0.009,
+    extra_dim_values=["United Kingdom", "Germany", "France", "Netherlands"],
+    id_prefix="FS",
+    columns={
+        "customer": "user_id",
+        "invoice": "order_ref",
+        "date": "order_date",
+        "pid": "style_code",
+        "pname": "product_title",
+        "cat": "product_type",
+        "sub": "collection",
+        "qty": "units",
+        "price": "list_price",
+        "sales": "line_total",
+        "extra": "country",
+    },
+    date_format="%Y-%m-%dT%H:%M:%S",
+    customer_fmt="U{:07d}",
+    invoice_fmt="FS{:08d}",
+    customer_start=2400100,
+    invoice_start=30000001,
+    return_rate=0.0,
+)
+
+DS_WHOLESALE = Config(
+    key="wholesale_cafe_supplies",
+    filename="sample_wholesale_cafe_supplies.csv",
+    seed=55,
+    n_customers=170,
+    invoices_by_tier={"low": (5, 10), "mid": (14, 26), "high": (30, 50)},
+    tier_probs=(0.40, 0.40, 0.20),
+    products=[
+        ("Espresso Beans 1kg Case of 6", "Coffee and Tea", "Coffee", 74.00, 8),
+        ("Filter Coffee 1kg Case of 6", "Coffee and Tea", "Coffee", 62.00, 5),
+        ("Decaf Beans 1kg Case of 6", "Coffee and Tea", "Coffee", 79.00, 2),
+        ("Black Tea Bags 1000 Count", "Coffee and Tea", "Tea", 28.00, 5),
+        ("Green Tea Bags 500 Count", "Coffee and Tea", "Tea", 22.00, 3),
+        ("Whole Milk 1L Case of 12", "Dairy and Alternatives", "Milk", 14.50, 9),
+        ("Oat Drink 1L Case of 12", "Dairy and Alternatives", "Milk", 21.00, 6),
+        ("Barista Cream 1L Case of 6", "Dairy and Alternatives", "Cream", 12.50, 3),
+        ("Butter Portions 200 Count", "Dairy and Alternatives", "Cream", 18.00, 3),
+        ("Paper Cups 8oz 1000 Count", "Disposables", "Cups and Lids", 38.00, 8),
+        ("Paper Cups 12oz 1000 Count", "Disposables", "Cups and Lids", 46.00, 7),
+        ("Cup Lids 12oz 1000 Count", "Disposables", "Cups and Lids", 24.00, 7),
+        ("Paper Napkins 5000 Count", "Disposables", "Napkins and Cutlery", 19.00, 6),
+        ("Wooden Stirrers 5000 Count", "Disposables", "Napkins and Cutlery", 9.50, 5),
+        ("Compostable Cutlery Set 500", "Disposables", "Napkins and Cutlery", 32.00, 3),
+        ("Takeaway Boxes 250 Count", "Disposables", "Packaging", 27.00, 4),
+        ("Paper Bags Large 500 Count", "Disposables", "Packaging", 21.00, 4),
+        ("Vanilla Syrup 1L Case of 6", "Syrups and Sauces", "Syrups", 36.00, 4),
+        ("Caramel Syrup 1L Case of 6", "Syrups and Sauces", "Syrups", 36.00, 4),
+        ("Chocolate Sauce 2kg Case of 4", "Syrups and Sauces", "Sauces", 42.00, 3),
+        ("Cocoa Powder 1kg Case of 6", "Syrups and Sauces", "Sauces", 44.00, 3),
+        ("Sugar Sachets 2000 Count", "Pantry", "Sweeteners", 17.00, 6),
+        ("Sweetener Sachets 1000 Count", "Pantry", "Sweeteners", 12.00, 3),
+        ("Plain Flour 16kg Sack", "Pantry", "Baking", 15.00, 3),
+        ("Frozen Croissants 60 Count", "Pantry", "Baking", 29.00, 4),
+        ("Muffin Mix 5kg", "Pantry", "Baking", 16.50, 3),
+        ("Surface Sanitiser 5L Case of 2", "Cleaning", "Hygiene", 23.00, 4),
+        ("Washing Up Liquid 5L", "Cleaning", "Hygiene", 8.50, 4),
+        ("Blue Roll 6 Pack", "Cleaning", "Paper", 25.00, 4),
+        ("Bin Liners 500 Count", "Cleaning", "Paper", 19.50, 4),
+        ("Espresso Machine Descaler 12 Pack", "Cleaning", "Equipment Care", 34.00, 2),
+        ("Milk Jug Stainless 600ml", "Equipment", "Barista Tools", 11.50, 1.5),
+        ("Tamper 58mm", "Equipment", "Barista Tools", 24.00, 1),
+        ("Grinder Burr Set", "Equipment", "Spare Parts", 59.00, 0.8),
+    ],
+    bundles=[
+        ("Paper Cups 8oz 1000 Count", "Cup Lids 12oz 1000 Count"),
+        ("Paper Cups 12oz 1000 Count", "Cup Lids 12oz 1000 Count"),
+        ("Espresso Beans 1kg Case of 6", "Whole Milk 1L Case of 12"),
+        ("Espresso Beans 1kg Case of 6", "Sugar Sachets 2000 Count"),
+        ("Paper Napkins 5000 Count", "Wooden Stirrers 5000 Count"),
+        ("Takeaway Boxes 250 Count", "Paper Bags Large 500 Count"),
+        ("Vanilla Syrup 1L Case of 6", "Caramel Syrup 1L Case of 6"),
+        ("Surface Sanitiser 5L Case of 2", "Blue Roll 6 Pack"),
+        ("Oat Drink 1L Case of 12", "Barista Cream 1L Case of 6"),
+        ("Frozen Croissants 60 Count", "Butter Portions 200 Count"),
+    ],
+    bundle_prob=0.5,
+    extra_mean=1.2,
+    qty_lambda={"Coffee and Tea": 1.5, "Dairy and Alternatives": 2.5, "Disposables": 2.0, "Syrups and Sauces": 0.8, "Pantry": 1.2, "Cleaning": 1.0, "Equipment": 0.1},
+    seasonality=[0.95, 0.95, 1.00, 1.05, 1.10, 1.10, 1.05, 1.00, 1.05, 1.05, 1.10, 1.00],
+    monthly_growth=0.008,
+    extra_dim_values=["North", "Central", "South", "Coastal"],
+    id_prefix="WS",
+    columns={
+        "customer": "Account",
+        "invoice": "Sales Order",
+        "date": "Ship Date",
+        "pid": "Item No",
+        "pname": "Description",
+        "cat": "Product Group",
+        "sub": "Product Line",
+        "qty": "Qty",
+        "price": "Net Price",
+        "sales": "Net Amount",
+        "extra": "Region",
+    },
+    date_format="%d.%m.%Y",
+    customer_fmt="AC-{:04d}",
+    invoice_fmt="SO{:07d}",
+    customer_start=1001,
+    invoice_start=5500001,
+    sep=";",
+    decimal=",",
+)
+
+
 def month_weights(cfg: Config, join_idx: int) -> np.ndarray:
     weights = np.zeros(N_MONTHS)
     for i in range(N_MONTHS):
@@ -421,6 +587,25 @@ def generate(cfg: Config) -> pd.DataFrame:
                         "extra": extra_value,
                     }
                 )
+                if cfg.return_rate > 0 and rng.random() < cfg.return_rate:
+                    # A return: a negative row booked a few days later under its own reference.
+                    back_qty = int(rng.integers(1, qty + 1))
+                    back_stamp = min(stamp + pd.Timedelta(days=int(rng.integers(3, 21))), END)
+                    rows.append(
+                        {
+                            "customer": cfg.customer_fmt.format(cfg.customer_start + c),
+                            "invoice": cfg.invoice_fmt.format(invoice_no) + "R",
+                            "date": back_stamp,
+                            "pid": prods.at[p, "pid"],
+                            "pname": prods.at[p, "name"],
+                            "cat": cat,
+                            "sub": prods.at[p, "sub"],
+                            "qty": -back_qty,
+                            "price": price,
+                            "sales": round(-back_qty * price, 2),
+                            "extra": extra_value,
+                        }
+                    )
 
     df = pd.DataFrame(rows).sort_values(["date", "invoice", "pid"]).reset_index(drop=True)
     df["date"] = df["date"].dt.strftime(cfg.date_format)
@@ -431,10 +616,10 @@ def generate(cfg: Config) -> pd.DataFrame:
 
 def main() -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    for cfg in (DS_OFFICE, DS_GROCERY, DS_ELECTRONICS):
+    for cfg in (DS_OFFICE, DS_GROCERY, DS_ELECTRONICS, DS_FASHION, DS_WHOLESALE):
         df = generate(cfg)
         path = OUT_DIR / cfg.filename
-        df.to_csv(path, index=False)
+        df.to_csv(path, index=False, sep=cfg.sep, decimal=cfg.decimal)
         inv_col = cfg.columns["invoice"]
         sizes = df.groupby(inv_col).size()
         print(

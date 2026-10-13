@@ -6,8 +6,13 @@ Two standard, well known approaches are tried and the more accurate one is kept:
   2. STL + ETS: remove the yearly seasonal pattern (STL decomposition), forecast the
      smoothed series with ETS, then add the seasonal pattern back.
 
-"More accurate" is decided by a back test on the most recent months of the user's own
-data, so the choice adapts to each dataset and each filter selection.
+"More accurate" is decided by a rolling origin back test on the user's own data: the model is
+refitted several times, each time hiding the next few months, forecasting them and comparing with
+what really happened. This is the standard way to measure forecast error on time series, and it
+adapts the choice to each dataset and each filter selection.
+
+Error is reported with the measures most used in business forecasting: WAPE, MAPE, MAE, RMSE
+and bias, together with a simple benchmark (repeat the same month of last year).
 """
 from __future__ import annotations
 
@@ -30,8 +35,12 @@ SPEC = [
 ALL_VALUE = "__ALL__"
 MIN_MONTHS = 6
 MAX_PERIODS = 36
-MIN_SEASONAL_MONTHS = 30  # 24 months to learn the pattern plus at least 6 months to test it
-SEASONAL_MUST_BEAT = 0.85  # seasonal model must be at least 15% more accurate on the back test to be used
+MIN_TRAIN = 12            # a test forecast needs at least a year of earlier history
+MIN_SEASONAL_TRAIN = 24   # two years are needed to learn a yearly pattern
+MAX_FOLDS = 12            # rolling test starting points: one for each month of the latest year
+MAX_TEST_HORIZON = 12     # months hidden in each test
+MIN_TEST_POINTS = 6       # fewer tested months than this is not a fair measure
+SEASONAL_MUST_BEAT = 0.85  # seasonal model must have at least 15% lower error on the back test to be used
 
 
 # ---------------------------------------------------------------------------
@@ -124,50 +133,116 @@ def _range_from_backtest(mean: np.ndarray, actual: np.ndarray, predicted: np.nda
     return mean - 1.96 * sigma, mean + 1.96 * sigma
 
 
-def _choose_and_forecast(y: pd.Series, horizon: int, floor_zero: bool):
-    """Return the chosen forecast plus accuracy details from a back test."""
-    n = len(y)
-    series = pd.Series(y.to_numpy(dtype=float))
-    can_test_seasonal = n >= MIN_SEASONAL_MONTHS
+def _fold_ends(n: int, horizon: int, first_allowed: int) -> list[int]:
+    """Rolling origin: the forecast start points used for testing, oldest first.
+
+    Starting points run month by month back from the newest possible one, so that together they
+    cover every month of the year. Each test forecast uses only the history before its start.
+    """
+    newest = n - horizon
+    oldest = max(first_allowed, newest - (MAX_FOLDS - 1))
+    return list(range(oldest, newest + 1)) if newest >= first_allowed else []
+
+
+def _measures(actual: np.ndarray, predicted: np.ndarray, benchmark: np.ndarray) -> dict:
+    """The standard forecast error measures, computed over every tested month."""
+    error = predicted - actual
+    total = float(np.abs(actual).sum())
+    wape = float(np.abs(error).sum() / total)
+    nonzero = actual != 0
+    mape = float(np.mean(np.abs(error[nonzero] / actual[nonzero]))) if nonzero.all() else None
+    bench_wape = float(np.abs(benchmark - actual).sum() / total)
+    return {
+        "accuracy_pct": round(max(0.0, 100 * (1 - wape)), 1),
+        "wape_pct": round(100 * wape, 1),
+        "mape_pct": None if mape is None else round(100 * mape, 1),
+        "mae": money(np.mean(np.abs(error))),
+        "rmse": money(np.sqrt(np.mean(error ** 2))),
+        "bias_pct": round(100 * float(error.sum() / total), 1),
+        "benchmark_wape_pct": round(100 * bench_wape, 1),
+    }
+
+
+def _evaluate(series: pd.Series, horizon: int, floor_zero: bool):
+    """Rolling origin back test. Returns the chosen model, every tested forecast and the error measures."""
+    y = series.to_numpy(dtype=float)
+    h = max(1, min(horizon, MAX_TEST_HORIZON))
 
     def clip(arr):
         return np.maximum(arr, 0.0) if floor_zero else arr
 
-    accuracy = None
-    backtest = None
-    bt_actual = bt_predicted = None
-    chosen = "ets"
-    hold = min(12, n - 24) if can_test_seasonal else (min(6, n // 4) if n >= 18 else 0)
-    if hold >= 3:
-        train, actual = series.iloc[:-hold].reset_index(drop=True), series.iloc[-hold:].to_numpy()
-        results = {}
-        for name, fn in (("ets", _forecast_ets), ("stl", _forecast_stl)):
-            if name == "stl" and not can_test_seasonal:
-                continue
+    def forecasts(model, ends):
+        out = {}
+        for end in ends:
             try:
-                predicted = clip(fn(train, hold)[0])
-                results[name] = (_wape(actual, predicted), predicted)
+                out[end] = clip(model(pd.Series(y[:end]), h)[0])
             except Exception:
                 continue
-        if results:
-            if "stl" in results and "ets" in results:
-                chosen = "stl" if results["stl"][0] < results["ets"][0] * SEASONAL_MUST_BEAT else "ets"
-            elif "stl" in results:
-                chosen = "stl"
-            else:
-                chosen = "ets"
-            error, predicted = results[chosen]
-            if np.isfinite(error):
-                bt_actual, bt_predicted = actual, predicted
-                accuracy = {
-                    "accuracy_pct": round(max(0.0, 100 * (1 - error)), 1),
-                    "typical_error_pct": round(100 * error, 1),
-                    "months_tested": int(hold),
-                }
-                backtest = [
-                    {"month": _month_label(p), "actual": money(a), "forecast": money(f)}
-                    for p, a, f in zip(y.index[-hold:], actual, predicted)
-                ]
+        return out
+
+    # Seasonal comparison: needs two years of history before every test start.
+    seasonal_ends = _fold_ends(len(y), h, MIN_SEASONAL_TRAIN)
+    chosen, seasonal_tested, basis, predictions = "ets", False, [], {}
+    if len(seasonal_ends) * h >= MIN_TEST_POINTS:
+        ets_pred = forecasts(_forecast_ets, seasonal_ends)
+        stl_pred = forecasts(_forecast_stl, seasonal_ends)
+        both = sorted(set(ets_pred) & set(stl_pred))
+        if len(both) * h >= MIN_TEST_POINTS:
+            seasonal_tested = True
+            actual_all = np.concatenate([y[e:e + h] for e in both])
+            err_ets = _wape(actual_all, np.concatenate([ets_pred[e] for e in both]))
+            err_stl = _wape(actual_all, np.concatenate([stl_pred[e] for e in both]))
+            chosen = "stl" if err_stl < err_ets * SEASONAL_MUST_BEAT else "ets"
+            basis, predictions = both, (stl_pred if chosen == "stl" else ets_pred)
+    if not seasonal_tested:
+        ends = _fold_ends(len(y), h, MIN_TRAIN)
+        predictions = forecasts(_forecast_ets, ends)
+        basis = sorted(predictions)
+    if len(basis) * h < MIN_TEST_POINTS:
+        return None
+
+    actual = np.concatenate([y[e:e + h] for e in basis])
+    predicted = np.concatenate([predictions[e] for e in basis])
+    # Benchmark: repeat the same month of the previous year, using only earlier data.
+    benchmark = np.concatenate([np.array([y[e + i - 12] for i in range(h)]) for e in basis])
+    if not np.isfinite(predicted).all() or float(np.abs(actual).sum()) == 0:
+        return None
+    return {
+        "chosen": chosen,
+        "seasonal_tested": seasonal_tested,
+        "actual": actual,
+        "predicted": predicted,
+        "months": [series.index[e + i] for e in basis for i in range(h)],
+        "made_from": [series.index[e - 1] for e in basis for _ in range(h)],
+        "ahead": [i + 1 for _ in basis for i in range(h)],
+        "folds": len(basis),
+        "horizon": h,
+        "measures": _measures(actual, predicted, benchmark),
+    }
+
+
+def _choose_and_forecast(y: pd.Series, horizon: int, floor_zero: bool):
+    """Return the chosen forecast plus the back test details."""
+    n = len(y)
+    series = pd.Series(y.to_numpy(dtype=float))
+    evaluation = _evaluate(y, horizon, floor_zero)
+
+    accuracy = backtest = None
+    chosen = "ets"
+    if evaluation:
+        chosen = evaluation["chosen"]
+        accuracy = {
+            **evaluation["measures"],
+            "months_tested": int(len(evaluation["actual"])),
+            "folds": evaluation["folds"],
+            "horizon": evaluation["horizon"],
+        }
+        backtest = [
+            {"month": _month_label(p), "made_from": _month_label(q), "ahead": int(k), "actual": money(a), "forecast": money(f)}
+            for p, q, k, a, f in zip(evaluation["months"], evaluation["made_from"], evaluation["ahead"], evaluation["actual"], evaluation["predicted"])
+        ]
+        backtest.sort(key=lambda row: (row["month"], row["ahead"]))
+    seasonal_tested = bool(evaluation and evaluation["seasonal_tested"])
 
     order = ["stl", "ets"] if chosen == "stl" else ["ets"]
     for name in order:
@@ -175,9 +250,9 @@ def _choose_and_forecast(y: pd.Series, horizon: int, floor_zero: bool):
             fn = _forecast_stl if name == "stl" else _forecast_ets
             mean, lower, upper, info = fn(series, horizon)
             if np.isfinite(mean).all():
-                if name == "stl" and bt_actual is not None:
-                    lower, upper = _range_from_backtest(mean, bt_actual, bt_predicted)
-                return name, mean, lower, upper, info, accuracy, backtest
+                if name == "stl" and evaluation is not None:
+                    lower, upper = _range_from_backtest(mean, evaluation["actual"], evaluation["predicted"])
+                return name, mean, lower, upper, info, accuracy, backtest, seasonal_tested
         except Exception:
             continue
 
@@ -185,14 +260,14 @@ def _choose_and_forecast(y: pd.Series, horizon: int, floor_zero: bool):
     recent = series.tail(min(6, n))
     mean = np.repeat(float(recent.mean()), horizon)
     sigma = float(recent.std(ddof=0)) or abs(float(recent.mean())) * 0.1 or 1.0
-    return "average", mean, mean - 1.96 * sigma, mean + 1.96 * sigma, {"trend": False, "seasonal": False}, None, None
+    return "average", mean, mean - 1.96 * sigma, mean + 1.96 * sigma, {"trend": False, "seasonal": False}, None, None, False
 
 
 MODEL_TEXT = {
-    "level": ("Level model (ETS)", "Uses a smoothed average of recent months, which suits steady sales."),
-    "trend": ("Trend model (ETS)", "Follows the recent direction of sales, with growth or decline gradually leveling off."),
-    "seasonal": ("Seasonal trend model (STL + ETS)", "Combines the recent direction of sales with the yearly seasonal pattern in your history."),
-    "average": ("Recent average", "Uses the average of the most recent months because the data did not fit a standard forecasting model."),
+    "level": ("Exponential smoothing", "A weighted average that favors recent months."),
+    "trend": ("Exponential smoothing with trend", "Follows the recent direction of sales."),
+    "seasonal": ("Exponential smoothing with seasonal adjustment", "Adds the yearly seasonal pattern."),
+    "average": ("Recent average", "The average of the most recent months."),
 }
 
 
@@ -233,17 +308,21 @@ def _seasonal_sentence(effects: np.ndarray, last_period: pd.Period) -> str | Non
 # Entry point
 # ---------------------------------------------------------------------------
 def run(df: pd.DataFrame, params: dict) -> dict:
-    cols = select_columns(df, params, SPEC, optional=["additional_column"])
+    cols = select_columns(df, params, SPEC, optional=["filter_column", "additional_column"])
 
     try:
-        periods = int(float(str(params.get("periods", "")).strip()))
-    except ValueError:
+        number = float(str(params.get("periods", "")).strip())
+        if not number.is_integer():
+            raise ValueError
+        periods = int(number)
+    except (ValueError, OverflowError):
         raise UserError("Please enter the Forecasting Period as a whole number of months, for example 6.")
     if periods < 1 or periods > MAX_PERIODS:
         raise UserError(f"The Forecasting Period must be between 1 and {MAX_PERIODS} months.")
 
+    filter_col = cols.get("filter_column")
     filter_value = params.get("filter_value")
-    if filter_value in (None, ""):
+    if filter_col and filter_value in (None, ""):
         raise UserError("Please choose a value for the Filter Column, or choose All to forecast your total sales.")
     additional_col = cols.get("additional_column")
     additional_value = params.get("additional_value")
@@ -253,8 +332,9 @@ def run(df: pd.DataFrame, params: dict) -> dict:
     spec = {
         "sales": (cols["sales"], "number", "Sales Column"),
         "date": (cols["date"], "date", "Date Column"),
-        "f1": (cols["filter_column"], "text", "Filter Column"),
     }
+    if filter_col:
+        spec["f1"] = (filter_col, "text", "Filter Column")
     if additional_col:
         spec["f2"] = (additional_col, "text", "Additional Filter Column")
     frame, warnings = build_frame(df, spec)
@@ -265,9 +345,9 @@ def run(df: pd.DataFrame, params: dict) -> dict:
     frame = frame[(months >= start) & (months <= end)]
 
     filters = []
-    if filter_value != ALL_VALUE:
+    if filter_col and filter_value != ALL_VALUE:
         frame = frame[frame["f1"] == str(filter_value).strip()]
-        filters.append(f"{cols['filter_column']}: {filter_value}")
+        filters.append(f"{filter_col}: {filter_value}")
     if additional_col and additional_value != ALL_VALUE:
         frame = frame[frame["f2"] == str(additional_value).strip()]
         filters.append(f"{additional_col}: {additional_value}")
@@ -281,7 +361,8 @@ def run(df: pd.DataFrame, params: dict) -> dict:
     monthly = monthly[monthly.index >= first_sale]
     if len(monthly) < MIN_MONTHS:
         raise UserError(
-            f"Only {len(monthly)} months of history were found for this selection. At least {MIN_MONTHS} months are needed to create a forecast."
+            f"Only {len(monthly)} month{'s' if len(monthly) != 1 else ''} of history {'was' if len(monthly) == 1 else 'were'} found for this selection. "
+            f"At least {MIN_MONTHS} months are needed to create a forecast."
         )
     if float(monthly.abs().sum()) == 0:
         raise UserError("Sales are zero for this selection, so there is nothing to forecast.")
@@ -289,7 +370,7 @@ def run(df: pd.DataFrame, params: dict) -> dict:
     y = pd.Series(monthly.to_numpy(dtype=float), index=pd.period_range(monthly.index[0], periods=len(monthly), freq="M"))
     floor_zero = float(y.min()) >= 0
 
-    kind, mean, lower, upper, info, accuracy, backtest = _choose_and_forecast(y, periods, floor_zero)
+    kind, mean, lower, upper, info, accuracy, backtest, seasonal_tested = _choose_and_forecast(y, periods, floor_zero)
     if floor_zero:
         mean, lower, upper = np.maximum(mean, 0), np.maximum(lower, 0), np.maximum(upper, 0)
     lower = np.minimum(lower, mean)
@@ -342,19 +423,25 @@ def run(df: pd.DataFrame, params: dict) -> dict:
     if periods > 1:
         peak_idx = int(np.argmax(mean))
         insights.append(f"The strongest month in the forecast is {calendar.month_name[forecast_index[peak_idx].month]} {forecast_index[peak_idx].year}.")
-    if info.get("seasonal") and "effects" in info:
-        sentence = _seasonal_sentence(info["effects"], y.index[-1])
-        if sentence:
-            insights.append(sentence)
-    elif len(y) >= MIN_SEASONAL_MONTHS and kind == "ets":
-        insights.append("A yearly seasonal pattern did not make the forecast more accurate for this selection, so a simpler model was used.")
     if accuracy:
-        insights.append(
-            f"When tested on the last {accuracy['months_tested']} months of your history, the forecast was typically within "
-            f"{accuracy['typical_error_pct']:.0f}% of actual sales."
-        )
-    if len(y) < MIN_SEASONAL_MONTHS:
-        warnings.append("Yearly seasonal patterns are included when at least 30 months of history are available. Add more history for a more detailed forecast.")
+        model_err, bench_err = accuracy["wape_pct"], accuracy["benchmark_wape_pct"]
+        if bench_err > 0:
+            gain = 1 - model_err / bench_err
+            if gain >= 0.05:
+                insights.append(
+                    f"Compared with repeating the same month of last year, this forecast had {100 * gain:.0f}% lower error "
+                    f"({model_err:.1f}% against {bench_err:.1f}%)."
+                )
+            elif gain > -0.05:
+                insights.append(
+                    f"Compared with repeating the same month of last year, this forecast had about the same error "
+                    f"({model_err:.1f}% against {bench_err:.1f}%)."
+                )
+            else:
+                insights.append(
+                    f"Repeating the same month of last year had lower error than this forecast "
+                    f"({bench_err:.1f}% against {model_err:.1f}%)."
+                )
     if periods > len(y):
         warnings.append("The forecast period is longer than your history, so later months are less certain.")
 

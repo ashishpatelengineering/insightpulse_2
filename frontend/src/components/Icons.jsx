@@ -51,6 +51,14 @@ export function ModeIcon({ name, size = 28 }) {
           <path d="m8 12 6-4.5 5 2.5 8-6.5M23 3.5h4v4" />
         </svg>
       );
+    case "help":
+      return (
+        <svg {...props}>
+          <circle cx="16" cy="16" r="11.5" />
+          <path d="M12.3 12.6c.3-2.1 1.8-3.4 3.9-3.4 2.3 0 3.9 1.4 3.9 3.3 0 2.7-3.5 2.9-3.5 5.6" />
+          <circle cx="16.2" cy="22.6" r="0.9" fill="currentColor" />
+        </svg>
+      );
     default:
       return null;
   }
@@ -112,7 +120,7 @@ export function FileIcon({ size = 16 }) {
 export function LogoMark({ size = 30 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-      <rect width="32" height="32" rx="8" fill="#0b5ea8" />
+      <rect width="32" height="32" rx="8" fill="#1e3a5f" />
       <path d="M5 17h5l3-8 5 15 3-9h6" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );

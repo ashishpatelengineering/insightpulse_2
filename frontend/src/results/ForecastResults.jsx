@@ -24,7 +24,7 @@ function ChartTooltip({ active, payload, label }) {
 }
 
 export default function ForecastResults({ data }) {
-  const { kpis, model, comparison, accuracy, history, forecast, backtest, insights, warnings, selection } = data;
+  const { kpis, model, comparison, accuracy, history, forecast, insights, warnings, selection } = data;
 
   const chartData = useMemo(() => {
     const rows = history.map((h) => ({ month: h.month, history: h.value }));
@@ -44,18 +44,6 @@ export default function ForecastResults({ data }) {
     { key: "upper", label: "High estimate", align: "right", render: (r) => formatNumber(r.upper), csv: (r) => r.upper },
   ];
 
-  const backtestColumns = [
-    { key: "month", label: "Month", render: (r) => formatMonth(r.month), csv: (r) => r.month },
-    { key: "actual", label: "Actual sales", align: "right", render: (r) => formatNumber(r.actual) },
-    { key: "forecast", label: "What the model predicted", align: "right", render: (r) => formatNumber(r.forecast) },
-    {
-      key: "diff",
-      label: "Difference",
-      align: "right",
-      value: (r) => (r.actual ? (100 * (r.forecast - r.actual)) / r.actual : 0),
-      render: (r) => (r.actual ? `${r.forecast >= r.actual ? "+" : ""}${((100 * (r.forecast - r.actual)) / r.actual).toFixed(1)}%` : "n/a"),
-    },
-  ];
 
   return (
     <div className="results">
@@ -71,20 +59,19 @@ export default function ForecastResults({ data }) {
         <KpiCard label={`Expected sales, next ${kpis.periods} month${kpis.periods > 1 ? "s" : ""}`} value={formatNumber(kpis.forecast_total)} />
         {comparison ? (
           <KpiCard
-            label={`Compared with ${comparison.label}`}
+            label={comparison.label === "the same months last year" ? "Versus same months last year" : `Versus ${comparison.label}`}
             value={`${change >= 0 ? "+" : ""}${change.toFixed(1)}%`}
             tone={changeTone}
             sub={`${formatNumber(comparison.previous)} before`}
           />
         ) : (
-          <KpiCard label="Compared with last year" value="Not available" sub="Needs 12 months of history" />
+          <KpiCard label="Versus same months last year" value="Not available" sub="Needs 12 months of history" />
         )}
         {accuracy ? (
           <KpiCard
             label="Forecast accuracy"
             value={`${accuracy.accuracy_pct.toFixed(0)}%`}
-            sub={`tested on the last ${accuracy.months_tested} months`}
-            help="Measured by hiding your most recent months, forecasting them, and comparing with what really happened."
+            sub="tested on past data"
           />
         ) : (
           <KpiCard label="Forecast accuracy" value="Not available" sub="Needs 18 months of history" />
@@ -92,17 +79,17 @@ export default function ForecastResults({ data }) {
         <KpiCard label="History used" value={`${kpis.history_months} months`} sub={`${formatMonth(kpis.history_start)} to ${formatMonth(kpis.history_end)}`} />
       </KpiRow>
 
-      <Block title="Sales history and forecast" subtitle="The shaded area is the likely range. Real sales should fall inside it about nine times out of ten.">
+      <Block title="Sales history and forecast" subtitle="The shaded area is the likely range.">
         <div className="chart" style={{ height: 360 }}>
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={chartData} margin={{ top: 10, right: 16, left: 0, bottom: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e9f0" />
-              <XAxis dataKey="month" tickFormatter={formatMonth} minTickGap={36} tickLine={false} axisLine={{ stroke: "#cfd6e0" }} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e8ebef" />
+              <XAxis dataKey="month" tickFormatter={formatMonth} minTickGap={36} tickLine={false} axisLine={{ stroke: "#d0d5db" }} />
               <YAxis tickFormatter={compactNumber} tickLine={false} axisLine={false} width={56} />
               <Tooltip content={<ChartTooltip />} />
-              <Area dataKey="range" stroke="none" fill="#f59e0b" fillOpacity={0.18} isAnimationActive={false} connectNulls={false} />
-              <Line dataKey="history" stroke="#0b5ea8" strokeWidth={2.2} dot={false} isAnimationActive={false} connectNulls={false} />
-              <Line dataKey="forecast" stroke="#d97706" strokeWidth={2.4} strokeDasharray="6 4" dot={false} isAnimationActive={false} connectNulls={false} />
+              <Area dataKey="range" stroke="none" fill="#a9772f" fillOpacity={0.18} isAnimationActive={false} connectNulls={false} />
+              <Line dataKey="history" stroke="#1e3a5f" strokeWidth={2.2} dot={false} isAnimationActive={false} connectNulls={false} />
+              <Line dataKey="forecast" stroke="#a9772f" strokeWidth={2.4} strokeDasharray="6 4" dot={false} isAnimationActive={false} connectNulls={false} />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
@@ -115,22 +102,50 @@ export default function ForecastResults({ data }) {
 
       <Insights items={insights} />
 
-      <Block title="Forecast by month" subtitle="Download these numbers for planning and budgeting.">
+      <Block title="Forecast by month" subtitle="Low and high estimates mark the likely range.">
         <DataTable columns={forecastColumns} rows={forecast} pageSize={12} downloadName="sales-forecast.csv" initialSort={{ key: "month", direction: "asc" }} />
       </Block>
 
-      <Block title="How the forecast was made" subtitle={model.name}>
-        <p>{model.description}</p>
-        {backtest && (
-          <details className="details">
-            <summary>See how the model performed on your recent months</summary>
-            <p className="muted small-print">
-              The last {backtest.length} months were hidden from the model, forecasted, and then compared with what really happened.
-            </p>
-            <DataTable columns={backtestColumns} rows={backtest} pageSize={12} initialSort={{ key: "month", direction: "asc" }} />
-          </details>
-        )}
-      </Block>
+      {accuracy && (
+        <Block title="Forecast accuracy" subtitle={model.name}>
+          <div className="table-scroll">
+            <table className="table measures">
+              <thead>
+                <tr>
+                  <th>Measure</th>
+                  <th className="num">Result</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Weighted absolute percentage error</td>
+                  <td className="num">{accuracy.wape_pct.toFixed(1)}%</td>
+                </tr>
+                <tr>
+                  <td>Mean absolute percentage error</td>
+                  <td className="num">{accuracy.mape_pct === null ? "n/a" : `${accuracy.mape_pct.toFixed(1)}%`}</td>
+                </tr>
+                <tr>
+                  <td>Mean absolute error</td>
+                  <td className="num">{formatNumber(accuracy.mae)}</td>
+                </tr>
+                <tr>
+                  <td>Root mean squared error</td>
+                  <td className="num">{formatNumber(accuracy.rmse)}</td>
+                </tr>
+                <tr>
+                  <td>Bias</td>
+                  <td className="num">{`${accuracy.bias_pct > 0 ? "+" : ""}${accuracy.bias_pct.toFixed(1)}%`}</td>
+                </tr>
+                <tr>
+                  <td>Benchmark error (same month last year)</td>
+                  <td className="num">{accuracy.benchmark_wape_pct.toFixed(1)}%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </Block>
+      )}
       <Notes items={warnings} />
     </div>
   );

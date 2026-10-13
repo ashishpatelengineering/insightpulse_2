@@ -7,46 +7,46 @@ const norm = (text) => String(text).toLowerCase().replace(/[^a-z0-9]/g, "");
 
 export const ROLES = {
   customer: {
-    words: ["customerid", "customerno", "customernumber", "customer", "custid", "memberid", "membernumber", "membernum", "member", "clientid", "client", "userid", "buyerid"],
+    words: ["accountnumber", "accountno", "accountcode", "account", "acct", "buyerid", "buyer", "shopperid", "shopper", "purchaser", "consumerid", "consumer", "accountid", "patron", "loyaltyid", "cardnumber", "customerid", "customerno", "customernumber", "customer", "custid", "memberid", "membernumber", "membernum", "member", "clientid", "client", "userid", "buyerid"],
     exclude: /date|time|name$/,
   },
   invoice: {
-    words: ["invoiceid", "invoiceno", "invoicenumber", "invoice", "billid", "billno", "billnumber", "bill", "orderid", "orderno", "ordernumber", "order", "transactionid", "transaction", "receiptno", "receipt"],
+    words: ["receiptid", "txnid", "txnno", "txn", "basketid", "cartid", "checkoutid", "salesorder", "invoiceid", "invoiceno", "invoicenumber", "invoice", "billid", "billno", "billnumber", "bill", "orderid", "orderno", "ordernumber", "order", "transactionid", "transaction", "receiptno", "receipt"],
     exclude: /date|time|customer|member/,
   },
   date: {
-    words: ["invoicedate", "orderdate", "purchasedate", "transactiondate", "saledate", "billdate", "date", "datetime", "timestamp"],
+    words: ["txndate", "salesdate", "dateofpurchase", "orderdatetime", "invoicedate", "orderdate", "purchasedate", "transactiondate", "saledate", "billdate", "date", "datetime", "timestamp"],
     exclude: /^$/,
     kind: "date",
   },
   productId: {
-    words: ["productid", "productcode", "sku", "itemcode", "itemid", "stockcode", "partno", "partnumber"],
+    words: ["stylecode", "stylenumber", "style", "articleid", "articleno", "itemno", "itemnumber", "upc", "barcode", "ean", "plu", "materialno", "productid", "productcode", "sku", "itemcode", "itemid", "stockcode", "partno", "partnumber"],
     exclude: /name|desc|category|cat$/,
   },
   productName: {
-    words: ["productname", "itemname", "itemdescription", "productdescription", "description", "product", "item", "title"],
+    words: ["articlename", "article", "skuname", "productdesc", "goods", "merchandise", "productname", "itemname", "itemdescription", "productdescription", "description", "product", "item", "title"],
     exclude: /id$|code|category|sub/,
   },
   category: {
-    words: ["category", "productcategory", "department", "segment", "dept", "productgroup", "group"],
+    words: ["producttype", "division", "family", "category", "productcategory", "department", "segment", "dept", "productgroup", "group"],
     exclude: /sub/,
   },
   subCategory: {
-    words: ["subcategory", "subsegment", "subdepartment", "aisle", "subgroup", "productclass", "class"],
+    words: ["productline", "collection", "subtype", "range", "subcategory", "subsegment", "subdepartment", "aisle", "subgroup", "productclass", "class"],
     exclude: /^$/,
   },
   quantity: {
-    words: ["quantity", "qty", "units", "unitssold", "pieces", "count"],
+    words: ["quantitysold", "orderqty", "numberofitems", "unitsold", "quantity", "qty", "units", "unitssold", "pieces", "count"],
     exclude: /price|amount|revenue|sales/,
     kind: "number",
   },
   unitPrice: {
-    words: ["unitprice", "priceperunit", "itemprice", "unitcost", "price", "rate"],
+    words: ["unitsellingprice", "sellingprice", "priceeach", "mrp", "unitprice", "priceperunit", "itemprice", "unitcost", "price", "rate"],
     exclude: /total/,
     kind: "number",
   },
   sales: {
-    words: ["sales", "salesamount", "netsales", "revenue", "amount", "totalprice", "linetotal", "total", "value"],
+    words: ["salesamt", "salesvalue", "netamount", "grossamount", "amt", "turnover", "gmv", "spend", "spent", "sales", "salesamount", "netsales", "revenue", "amount", "totalprice", "linetotal", "total", "value"],
     exclude: /unit|per|qty|quantity/,
     kind: "number",
   },

@@ -20,20 +20,14 @@ class UserError(Exception):
 
 # ---------------------------------------------------------------------------
 # Reading files
+#
+# Uploads can be up to 25 MB, and the hosting plan has limited memory, so a file is
+# read straight from the uploaded bytes (no extra copies of the text) and, when a mode
+# only needs a few columns, only those columns are loaded.
 # ---------------------------------------------------------------------------
-def _decode(data: bytes) -> str:
-    if data[:2] in (b"\xff\xfe", b"\xfe\xff"):
-        return data.decode("utf-16")
-    for enc in ("utf-8-sig", "cp1252", "latin-1"):
-        try:
-            return data.decode(enc)
-        except UnicodeDecodeError:
-            continue
-    raise UserError("We could not read this file. Please save it as a CSV (UTF-8) and try again.")
-
-
-def _detect_delimiter(text: str) -> str:
-    for line in text.splitlines():
+def _detect_delimiter(data: bytes, encoding: str) -> str:
+    prefix = data[:65536].decode(encoding, errors="replace")
+    for line in prefix.splitlines():
         if line.strip():
             counts = {d: line.count(d) for d in (",", ";", "\t", "|")}
             best = max(counts, key=counts.get)
@@ -41,39 +35,141 @@ def _detect_delimiter(text: str) -> str:
     return ","
 
 
-def read_table(data: bytes, filename: str = "") -> pd.DataFrame:
-    """Read an uploaded CSV into a DataFrame of strings."""
+def _encodings(data: bytes) -> list[str]:
+    if data[:2] in (b"\xff\xfe", b"\xfe\xff"):
+        return ["utf-16"]
+    return ["utf-8-sig", "cp1252", "latin-1"]
+
+
+def _clean_columns(df: pd.DataFrame) -> pd.DataFrame:
+    df.columns = [str(c).strip() for c in df.columns]
+    keep = [c for c in df.columns if c and not (c.lower().startswith("unnamed:") and df[c].isna().all())]
+    return df.loc[:, keep].dropna(how="all")
+
+
+def _check_name(filename: str) -> None:
+    if (filename or "").lower().endswith((".xlsx", ".xls", ".xlsm")):
+        raise UserError("Please upload a CSV file. In Excel, choose File > Save As > CSV.")
+
+
+def _read_csv(data: bytes, **kwargs):
+    """Try the common text encodings in turn. Calls pandas once per attempt, on the raw bytes."""
+    last_error: Exception | None = None
+    for encoding in _encodings(data):
+        sep = _detect_delimiter(data, encoding)
+        try:
+            return pd.read_csv(
+                io.BytesIO(data), sep=sep, dtype=str, skipinitialspace=True, on_bad_lines="skip", encoding=encoding, **kwargs
+            )
+        except UnicodeDecodeError as error:
+            last_error = error
+            continue
+        except (pd.errors.EmptyDataError, pd.errors.ParserError):
+            raise UserError("We could not find a table in this file. Please upload a CSV with a header row.")
+    raise UserError("We could not read this file. Please save it as a CSV (UTF-8) and try again.") from last_error
+
+
+def _too_many_rows(rows: int) -> UserError:
+    return UserError(
+        f"This file has {rows:,} rows. The limit is {MAX_ROWS:,} rows. "
+        "Please upload a smaller extract, for example the most recent two or three years."
+    )
+
+
+def read_table(data: bytes, filename: str = "", wanted: Iterable[str] | None = None) -> pd.DataFrame:
+    """Read an uploaded CSV into a DataFrame of strings.
+
+    wanted: names of the only columns to load. Used by the analysis modes to keep memory low.
+    """
     if not data:
         raise UserError("The uploaded file is empty.")
-    name = (filename or "").lower()
-    if name.endswith((".xlsx", ".xls", ".xlsm")):
-        raise UserError("Please upload a CSV file. In Excel, choose File > Save As > CSV.")
-    text = _decode(data)
-    sep = _detect_delimiter(text)
-    try:
-        df = pd.read_csv(
-            io.StringIO(text),
-            sep=sep,
-            dtype=str,
-            skipinitialspace=True,
-            on_bad_lines="skip",
-        )
-    except (pd.errors.EmptyDataError, pd.errors.ParserError):
-        raise UserError("We could not find a table in this file. Please upload a CSV with a header row.")
-    df.columns = [str(c).strip() for c in df.columns]
-    df = df.loc[:, [c for c in df.columns if c and not (c.lower().startswith("unnamed:") and df[c].isna().all())]]
-    df = df.dropna(how="all")
-    if df.shape[1] < 2:
+    _check_name(filename)
+    kwargs = {}
+    if wanted is not None:
+        names = {str(w).strip() for w in wanted}
+        kwargs["usecols"] = lambda column: str(column).strip() in names
+    df = _read_csv(data, **kwargs)
+    df = _clean_columns(df)
+    if wanted is None and df.shape[1] < 2:
         raise UserError("We could not find at least two columns. Please check that the file is a comma separated CSV.")
+    if wanted is not None and df.shape[1] == 0:
+        raise UserError(
+            "The columns you selected were not found in this file. "
+            "Please check that it is a comma separated CSV with column names in the first row."
+        )
     if df.empty:
         raise UserError("The file has a header row but no data rows.")
     if len(df) > MAX_ROWS:
-        raise UserError(
-            f"This file has {len(df):,} rows. The limit is {MAX_ROWS:,} rows. "
-            "Please upload a smaller extract, for example the most recent two or three years."
-        )
-    df = df.reset_index(drop=True)
-    return df
+        raise _too_many_rows(len(df))
+    return df.reset_index(drop=True)
+
+
+PROFILE_CHUNK_ROWS = 40_000
+PROFILE_SAMPLE_ROWS = 2000
+
+
+def inspect_table(data: bytes, filename: str = "") -> dict:
+    """Describe an uploaded file (rows, columns, a preview) without holding all of it in memory."""
+    if not data:
+        raise UserError("The uploaded file is empty.")
+    _check_name(filename)
+    last_error: Exception | None = None
+    for encoding in _encodings(data):
+        sep = _detect_delimiter(data, encoding)
+        try:
+            reader = pd.read_csv(
+                io.BytesIO(data), sep=sep, dtype=str, skipinitialspace=True, on_bad_lines="skip", encoding=encoding, chunksize=PROFILE_CHUNK_ROWS
+            )
+            rows = 0
+            sample = preview = None
+            columns: list[str] = []
+            missing: dict[str, int] = {}
+            examples: dict[str, list[str]] = {}
+            values: dict[str, set | None] = {}
+            for chunk in reader:
+                chunk = _clean_columns(chunk)
+                if chunk.empty:
+                    continue
+                if sample is None:
+                    columns = list(chunk.columns)
+                    sample = chunk.head(PROFILE_SAMPLE_ROWS).copy()
+                    preview = chunk.head(8).fillna("").to_dict("records")
+                    missing = {c: 0 for c in columns}
+                    examples = {c: [] for c in columns}
+                    values = {c: set() for c in columns}
+                elif len(sample) < PROFILE_SAMPLE_ROWS:
+                    sample = pd.concat([sample, chunk.head(PROFILE_SAMPLE_ROWS - len(sample))], ignore_index=True)
+                rows += len(chunk)
+                if rows > MAX_ROWS:
+                    raise _too_many_rows(rows)
+                for column in columns:
+                    series = chunk[column] if column in chunk else pd.Series(dtype=str)
+                    missing[column] += int(len(chunk) - series.notna().sum())
+                    non_null = series.dropna()
+                    if len(examples[column]) < 3:
+                        examples[column].extend(non_null.astype(str).head(3 - len(examples[column])).tolist())
+                    if values[column] is not None:
+                        values[column].update(non_null.astype(str).str.strip().unique().tolist())
+                        if len(values[column]) > MAX_FILTER_VALUES:
+                            values[column] = None
+            break
+        except UnicodeDecodeError as error:
+            last_error = error
+            continue
+        except (pd.errors.EmptyDataError, pd.errors.ParserError):
+            raise UserError("We could not find a table in this file. Please upload a CSV with a header row.")
+    else:
+        raise UserError("We could not read this file. Please save it as a CSV (UTF-8) and try again.") from last_error
+    if sample is None:
+        raise UserError("The file has a header row but no data rows.")
+    if len(columns) < 2:
+        raise UserError("We could not find at least two columns. Please check that the file is a comma separated CSV.")
+    return {
+        "filename": filename,
+        "rows": rows,
+        "columns": profile_columns(sample, columns, missing, examples, values),
+        "preview": preview,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -209,33 +305,29 @@ def parse_dates(series: pd.Series) -> pd.Series:
 # ---------------------------------------------------------------------------
 # Column profiling for the front end
 # ---------------------------------------------------------------------------
-def profile_table(df: pd.DataFrame) -> list[dict]:
-    sample = df.head(2000)
+def _column_kind(sample_col: pd.Series) -> str:
+    present = sample_col.notna()
+    if not present.any():
+        return "text"
+    if to_number(sample_col)[present].notna().mean() >= 0.95:
+        return "number"
+    if parse_dates(sample_col)[present].notna().mean() >= 0.95:
+        return "date"
+    return "text"
+
+
+def profile_columns(sample: pd.DataFrame, columns: list[str], missing: dict, examples: dict, values: dict) -> list[dict]:
     profile = []
-    for col in df.columns:
-        s = df[col]
-        non_null = s.dropna()
-        sample_col = sample[col]
-        kind = "text"
-        if sample_col.notna().any():
-            if to_number(sample_col)[sample_col.notna()].notna().mean() >= 0.95:
-                kind = "number"
-            else:
-                parsed = parse_dates(sample_col)
-                if parsed[sample_col.notna()].notna().mean() >= 0.95:
-                    kind = "date"
-        n_unique = int(non_null.nunique())
-        values: list[str] | None = None
-        if 0 < n_unique <= MAX_FILTER_VALUES:
-            values = sorted(non_null.astype(str).str.strip().unique().tolist(), key=lambda v: (v.lower(), v))
+    for col in columns:
+        distinct = values[col]
         profile.append(
             {
                 "name": col,
-                "kind": kind,
-                "unique": n_unique,
-                "missing": int(s.isna().sum()),
-                "examples": non_null.astype(str).head(3).tolist(),
-                "values": values,
+                "kind": _column_kind(sample[col]),
+                "unique": len(distinct) if distinct is not None else MAX_FILTER_VALUES + 1,
+                "missing": int(missing[col]),
+                "examples": examples[col],
+                "values": sorted(distinct, key=lambda v: (v.lower(), v)) if distinct else None,
             }
         )
     return profile
@@ -275,6 +367,10 @@ def build_frame(df: pd.DataFrame, spec: dict[str, tuple[str, str, str]]) -> tupl
     out: dict[str, pd.Series] = {}
     for name, (col, kind, label) in spec.items():
         s = df[col]
+        if kind == "label":
+            # Descriptive text such as a category. Blank cells are kept and shown as "Not specified".
+            out[name] = s.astype("string").str.strip().replace("", pd.NA).fillna("Not specified")
+            continue
         present = s.notna() & (s.astype("string").str.strip() != "")
         if not present.any():
             raise UserError(f"The {label} ('{col}') is empty. Please choose a different column.")
@@ -300,7 +396,7 @@ def build_frame(df: pd.DataFrame, spec: dict[str, tuple[str, str, str]]) -> tupl
     if frame.empty:
         raise UserError("No usable rows were found with the selected columns. Please check that you matched each input to the right column.")
     for name, (_, kind, _) in spec.items():
-        if kind == "text":
+        if kind in ("text", "label"):
             frame[name] = frame[name].astype(str)
     return frame, warnings
 

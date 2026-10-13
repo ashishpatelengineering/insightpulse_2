@@ -38,7 +38,7 @@ def post(mode, params, data=None, name="data.csv"):
 def test_health_and_samples():
     assert client.get("/api/health").json() == {"status": "ok"}
     samples = client.get("/api/samples").json()
-    assert len(samples) == 3
+    assert len(samples) == 5
     for s in samples:
         assert s["rows"] > 1000
         download = client.get(f"/api/samples/{s['id']}")
@@ -70,7 +70,7 @@ def test_every_mode_over_http(mode, params):
     res = post(mode, params)
     assert res.status_code == 200, res.text
     assert res.json()["mode"] == mode
-    assert res.json()["insights"]
+    assert res.json()["warnings"] is not None
 
 
 def test_unknown_mode_and_bad_params():
@@ -92,8 +92,8 @@ def error_of(mode, params, data=None, name="data.csv"):
 
 def test_missing_selection():
     params = clv_params(RC)
-    del params["quantity"]
-    assert "select the Quantity Column" in error_of("clv", params)
+    del params["customer_id"]
+    assert "select the Customer ID Column" in error_of("clv", params)
 
 
 def test_unknown_column():
@@ -127,7 +127,7 @@ def test_excel_file_rejected_kindly():
 
 def test_empty_and_garbage_files():
     assert "empty" in error_of("clv", clv_params(RC), data=b"")
-    assert "two columns" in error_of("clv", clv_params(RC), data=b"hello world")
+    assert "were not found in this file" in error_of("clv", clv_params(RC), data=b"hello world")
 
 
 def test_forecast_input_validation():
@@ -160,17 +160,23 @@ def test_basket_with_single_item_baskets():
 
 def test_too_few_customers_for_segments():
     df = pd.read_csv(io.BytesIO(retail_bytes()))
-    two = df[df["CustomerID"].isin(df["CustomerID"].unique()[:2])]
-    assert "At least 3 different customers" in error_of("clv", clv_params(RC), data=two.to_csv(index=False).encode())
+    few = df[df["CustomerID"].isin(df["CustomerID"].unique()[:4])]
+    assert "At least 10 different customers" in error_of("clv", clv_params(RC), data=few.to_csv(index=False).encode())
 
 
 # --------------------------------------------------------------------------- messy but valid data
-def test_returns_are_excluded_with_a_warning():
+def test_returns_are_subtracted_from_spend_and_are_not_orders():
+    clean = post("clv", clv_params(RC)).json()
     df = pd.read_csv(io.BytesIO(retail_bytes()))
     df.loc[df.index[:25], "Quantity"] = -1
     res = post("clv", clv_params(RC), data=df.to_csv(index=False).encode())
     assert res.status_code == 200
-    assert any("zero or negative" in w for w in res.json()["warnings"])
+    body = res.json()
+    assert any("subtracted from customer spend" in w for w in body["warnings"])
+    expected = float((df["Quantity"] * df["UnitPrice"]).sum())   # net of the returned lines
+    assert body["kpis"]["total_revenue"] == pytest.approx(expected, rel=1e-3)
+    assert body["kpis"]["total_revenue"] < clean["kpis"]["total_revenue"]
+    assert body["kpis"]["orders"] <= clean["kpis"]["orders"]
 
 
 def test_blank_rows_and_missing_values_are_skipped_with_a_warning():
@@ -211,3 +217,26 @@ def test_forecast_zero_months_are_filled():
     assert res.status_code == 200
     history = {h["month"]: h["value"] for h in res.json()["history"]}
     assert history["2025-03"] == 0 and len(history) == 36
+
+
+def test_forecast_rejects_fractional_and_odd_periods():
+    base = forecast_params(RC, "Furniture", periods=6)
+    for bad in ("2.5", "inf", "nan", "1e400"):
+        assert "whole number" in error_of("forecast", {**base, "periods": bad}), bad
+
+
+def test_forecast_filter_column_is_optional():
+    params = forecast_params(RC)
+    del params["filter_column"], params["filter_value"]
+    res = post("forecast", params)
+    assert res.status_code == 200, res.text[:200]
+    body = res.json()
+    assert body["selection"] == ["All sales"]
+    # Same numbers as choosing the filter column and then All.
+    with_all = post("forecast", forecast_params(RC)).json()
+    assert body["kpis"]["forecast_total"] == with_all["kpis"]["forecast_total"]
+
+
+def test_forecast_needs_a_value_once_a_filter_column_is_chosen():
+    params = forecast_params(RC, "")
+    assert "choose a value for the Filter Column" in error_of("forecast", params)

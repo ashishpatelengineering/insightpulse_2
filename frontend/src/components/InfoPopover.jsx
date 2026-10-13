@@ -47,24 +47,6 @@ export default function InfoPopover({ info, modeTitle }) {
             {info.bullets.map((text) => (
               <li key={text}>{text}</li>
             ))}
-            <li>
-              {info.stepsTitle}
-              <ol>
-                {info.steps.map((text) => (
-                  <li key={text}>{text}</li>
-                ))}
-              </ol>
-            </li>
-            {info.after && (
-              <li>
-                {info.afterTitle}
-                <ul className="info-sublist">
-                  {info.after.map((text) => (
-                    <li key={text}>{text}</li>
-                  ))}
-                </ul>
-              </li>
-            )}
           </ul>
         </div>
       )}

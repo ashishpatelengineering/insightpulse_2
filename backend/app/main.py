@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import basket, clv, forecast, recommend
-from .common import MAX_UPLOAD_BYTES, UserError, profile_table, read_table, to_jsonable
+from .common import MAX_UPLOAD_BYTES, UserError, inspect_table, read_table, to_jsonable
 from .samples import list_samples, sample_path
 
 logger = logging.getLogger("insightpulse")
@@ -82,15 +82,7 @@ def sample_file(sample_id: str):
 @app.post("/api/inspect")
 async def inspect_file(file: UploadFile = File(...)) -> dict:
     data = await _read_upload(file)
-    df = read_table(data, file.filename or "")
-    return to_jsonable(
-        {
-            "filename": file.filename,
-            "rows": int(len(df)),
-            "columns": profile_table(df),
-            "preview": df.head(8).fillna("").to_dict("records"),
-        }
-    )
+    return to_jsonable(inspect_table(data, file.filename or ""))
 
 
 @app.post("/api/analyze/{mode}")
@@ -105,7 +97,10 @@ async def analyze(mode: str, file: UploadFile = File(...), params: str = Form("{
     except ValueError:
         raise UserError("The selections could not be read. Please refresh the page and try again.")
     data = await _read_upload(file)
-    df = read_table(data, file.filename or "")
+    # Load only the columns the user chose, which keeps memory low on large files.
+    wanted = [v for v in parsed.values() if isinstance(v, str) and v.strip()]
+    df = read_table(data, file.filename or "", wanted=wanted)
+    del data
     result = handler(df, parsed)
     return JSONResponse(content=to_jsonable(result))
 

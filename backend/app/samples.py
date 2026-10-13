@@ -11,19 +11,31 @@ SAMPLES = [
         "id": "office-home-retail",
         "file": "sample_office_home_retail.csv",
         "name": "Office and Home Retail",
-        "description": "Three years of store sales across furniture, office supplies, technology and home decor in four regions.",
+        "description": "Three years of store sales across four regions.",
     },
     {
         "id": "grocery-supermarket",
         "file": "sample_grocery_supermarket.csv",
         "name": "Grocery and Daily Essentials",
-        "description": "Three years of supermarket purchases with frequent, larger baskets across four stores.",
+        "description": "Three years of supermarket purchases across four stores.",
     },
     {
         "id": "online-electronics",
         "file": "sample_online_electronics.csv",
         "name": "Online Electronics Store",
-        "description": "Three years of online orders for computing, mobile, audio, smart home and gaming across four sales channels.",
+        "description": "Three years of online orders across four sales channels.",
+    },
+    {
+        "id": "online-fashion",
+        "file": "sample_online_fashion.csv",
+        "name": "Online Fashion Store",
+        "description": "Three years of fashion orders across five countries.",
+    },
+    {
+        "id": "wholesale-cafe-supplies",
+        "file": "sample_wholesale_cafe_supplies.csv",
+        "name": "Cafe Supplies Wholesaler",
+        "description": "Three years of supply orders from cafes and restaurants.",
     },
 ]
 

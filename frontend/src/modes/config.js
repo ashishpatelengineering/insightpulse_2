@@ -6,39 +6,26 @@
 export const ALL_VALUE = "__ALL__";
 export const NONE_VALUE = "__NONE__";
 
-const COMMON_STEPS_START = [
-  "Upload a CSV file, or choose one of the sample datasets.",
-  "Match each input below to the correct column in your data. We suggest matches for you, so please check them.",
-];
-
 export const MODES = [
   {
     id: "clv",
     api: "clv",
     path: "/clv",
     title: "Customer Lifetime Value",
-    shortTitle: "CLV",
+    shortTitle: "Lifetime Value",
     icon: "clv",
+    subtitle: "Groups customers by how recently, how often and how much they buy.",
     info: {
       bullets: [
-        "Customer Lifetime Value mode shows which customers are worth the most to your business.",
-        "Customers are placed into three groups (Low, Medium and High Value) based on their total purchase amount.",
-        "Use the results to decide who to reward, who to win back and where to focus your marketing budget.",
-      ],
-      stepsTitle: "Follow these steps to segment your customers:",
-      steps: [
-        ...COMMON_STEPS_START,
-        "All inputs are required.",
-        "Your data must include these columns: Customer ID, Invoice ID, Invoice Date, Quantity and Unit Price.",
-        "Click Analyze.",
+        "Shows what each customer has spent and which customers matter most.",
+        "Customers are placed in five groups, from Champions to Hibernating.",
       ],
     },
     fields: [
-      { key: "customer_id", role: "customer", label: "Customer ID Column", hint: "Unique code or number for each customer", required: true },
-      { key: "invoice_id", role: "invoice", label: "Invoice ID Column", hint: "Identifies each purchase or receipt", required: true },
-      { key: "invoice_date", role: "date", label: "Invoice Date Column", hint: "The date of each purchase", required: true },
-      { key: "quantity", role: "quantity", label: "Quantity Column", hint: "Number of units bought on each line", required: true },
-      { key: "unit_price", role: "unitPrice", label: "Unit Price Column", hint: "Price of one unit", required: true },
+      { key: "customer_id", role: "customer", label: "Customer Column", hint: "Identifies each customer", required: true },
+      { key: "invoice_date", role: "date", label: "Date Column", hint: "Date of each sale", required: true },
+      { key: "sales", role: "sales", label: "Sales Column", hint: "Sales value of each row", required: true },
+      { key: "invoice_id", role: "invoice", label: "Order Column (Optional)", hint: "Identifies each order", required: false, allowNone: true },
     ],
   },
   {
@@ -48,27 +35,16 @@ export const MODES = [
     title: "Product Recommendation",
     shortTitle: "Product Recommendation",
     icon: "recommendation",
+    subtitle: "Suggests up to five products for each customer.",
     info: {
       bullets: [
-        "Product Recommendation mode suggests which products to offer each customer next.",
-        "Suggestions are based on what similar customers have bought, so they work well for cross selling, personalized offers and email campaigns.",
-      ],
-      stepsTitle: "Follow these steps to get recommendations:",
-      steps: [
-        ...COMMON_STEPS_START,
-        "All inputs are required.",
-        "Your data must include these columns: Customer ID, Product ID, Product Name, Category, Sub Category, Sales and Quantity.",
-        "Click Analyze, then choose a customer to see their top 5 suggested products.",
+        "Suggests the products to offer each customer next.",
+        "Suggestions come from what similar customers bought. A reliability check is shown with the results.",
       ],
     },
     fields: [
-      { key: "product_id", role: "productId", label: "Product ID Column", hint: "Unique code for each product", required: true },
-      { key: "product_name", role: "productName", label: "Product Name Column", hint: "The name customers see", required: true },
-      { key: "sales", role: "sales", label: "Sales Column", hint: "Sales value of each line (amount paid)", required: true },
-      { key: "category", role: "category", label: "Category Column", hint: "Main product group", required: true },
-      { key: "sub_category", role: "subCategory", label: "Sub Category Column", hint: "More detailed product group", required: true },
-      { key: "quantity", role: "quantity", label: "Quantity Column", hint: "Number of units bought", required: true },
-      { key: "customer_id", role: "customer", label: "Customer ID Column", hint: "Unique code for each customer", required: true },
+      { key: "customer_id", role: "customer", label: "Customer Column", hint: "Identifies each customer", required: true },
+      { key: "product_name", role: "productName", fallbackRole: "productId", label: "Product Column", hint: "Identifies each product", required: true },
     ],
   },
   {
@@ -78,30 +54,16 @@ export const MODES = [
     title: "Market Basket Analysis",
     shortTitle: "Market Basket Analysis",
     icon: "basket",
+    subtitle: "Finds products that are often bought together.",
     info: {
       bullets: [
-        "Market Basket Analysis mode shows which products customers tend to buy together.",
-        "Use it to plan bundles, promotions, shelf or website layouts and \"frequently bought together\" suggestions.",
-        "All products one member buys on the same date count as one basket.",
-      ],
-      stepsTitle: "Follow these steps to find product combinations:",
-      steps: [
-        ...COMMON_STEPS_START,
-        "All inputs are required.",
-        "Your data must include these columns: Member Number (customer), Date and Product Name.",
-        "Click Analyze.",
-      ],
-      afterTitle: "How to read the results:",
-      after: [
-        "Together: the number of baskets that contain the products together.",
-        "Confidence: how often the second product is bought when the first one is.",
-        "Lift: how much more likely the products are bought together than by chance. Above 1 means a real link, and higher means a stronger link.",
+        "Shows which products appear in the same order.",
+        "Use it for bundles, promotions and \"frequently bought together\" prompts.",
       ],
     },
     fields: [
-      { key: "member_number", role: "customer", label: "Member Number Column", hint: "Unique code for each member or customer", required: true },
-      { key: "date", role: "date", label: "Date Column", hint: "The date of each purchase", required: true },
-      { key: "product_name", role: "productName", label: "Product Name Column", hint: "The product that was bought", required: true },
+      { key: "product_name", role: "productName", fallbackRole: "productId", label: "Product Column", hint: "Identifies each product", required: true },
+      { key: "transaction_id", role: "invoice", label: "Order Column", hint: "Identifies each order", required: true },
     ],
   },
   {
@@ -111,29 +73,19 @@ export const MODES = [
     title: "Forecasting",
     shortTitle: "Forecasting",
     icon: "forecast",
+    subtitle: "Predicts monthly sales, with a likely range.",
     info: {
       bullets: [
-        "Forecasting mode predicts your future sales from your sales history.",
-        "It learns your growth trend and, when you have 30 months or more of history, your yearly seasonal pattern such as holiday peaks.",
-        "Forecasts are monthly and include a likely range, so you can plan for both stronger and weaker months.",
-      ],
-      stepsTitle: "Follow these steps to create a forecast:",
-      steps: [
-        ...COMMON_STEPS_START,
-        "All inputs are required except the Additional Filter.",
-        "Your data must include these columns: Sales (amount or value), Date and a Filter Column such as Product, Category or Region.",
-        "Choose a value to forecast one product, category or region, or choose All to forecast total sales. Use the optional Additional Filter to narrow it further.",
-        "Click Analyze.",
+        "Predicts sales for the coming months from your sales history.",
+        "Forecast one group, such as a category or region, or all sales.",
       ],
     },
     fields: [
-      { key: "sales", role: "sales", label: "Sales Column", hint: "Sales amount or value of each line", required: true },
-      { key: "date", role: "date", label: "Date Column", hint: "The date of each sale", required: true },
-      { key: "filter_column", role: "category", label: "Filter Column", hint: "What to forecast, for example Category, Product or Region", required: true },
-      { key: "filter_value", type: "value", column: "filter_column", label: "Filter Value", hint: "Choose one value, or All for total sales", required: true },
-      { key: "periods", type: "number", label: "Forecasting Period (Months)", hint: "How many months ahead to forecast (1 to 36)", required: true, min: 1, max: 36, placeholder: "For example 6" },
-      { key: "additional_column", role: "extraFilter", label: "Additional Filter Column (Optional)", hint: "Narrow the forecast further, for example by Region", required: false, allowNone: true },
-      { key: "additional_value", type: "value", column: "additional_column", label: "Additional Filter Value", hint: "Choose one value, or All", required: false },
+      { key: "sales", role: "sales", label: "Sales Column", hint: "Sales value of each row", required: true },
+      { key: "date", role: "date", label: "Date Column", hint: "Date of each sale", required: true },
+      { key: "filter_column", role: "category", label: "Group Column (Optional)", hint: "Forecast one group only", required: false, allowNone: true },
+      { key: "filter_value", type: "value", column: "filter_column", label: "Group", hint: "One group, or All", required: false },
+      { key: "periods", type: "number", label: "Months to Forecast", hint: "1 to 36", required: true, min: 1, max: 36, placeholder: "For example 6" },
     ],
   },
 ];
@@ -153,9 +105,9 @@ export function initialSelections(mode, suggestions) {
     } else if (field.type === "number") {
       values[field.key] = "6";
     } else if (field.allowNone) {
-      values[field.key] = suggestions[field.role] || NONE_VALUE;
+      values[field.key] = suggestions[field.role] || suggestions[field.fallbackRole] || NONE_VALUE;
     } else {
-      values[field.key] = suggestions[field.role] || "";
+      values[field.key] = suggestions[field.role] || suggestions[field.fallbackRole] || "";
     }
   });
   return values;

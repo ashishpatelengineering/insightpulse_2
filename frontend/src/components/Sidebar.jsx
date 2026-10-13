@@ -17,6 +17,10 @@ export default function Sidebar() {
           <span className="side-label">{mode.shortTitle}</span>
         </NavLink>
       ))}
+      <NavLink to="/help" className={({ isActive }) => `side-link side-help${isActive ? " active" : ""}`} title="Help" aria-label="Help">
+        <ModeIcon name="help" />
+        <span className="side-label">Help</span>
+      </NavLink>
     </nav>
   );
 }

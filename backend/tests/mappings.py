@@ -31,6 +31,26 @@ SAMPLES = {
         "filter_value": "Mobile",
         "additional_value": "Website",
     },
+    "online-fashion": {
+        "file": "sample_online_fashion.csv",
+        "cols": {
+            "customer": "user_id", "invoice": "order_ref", "date": "order_date",
+            "pid": "style_code", "pname": "product_title", "cat": "product_type", "sub": "collection",
+            "qty": "units", "price": "list_price", "sales": "line_total", "extra": "country",
+        },
+        "filter_value": "Tops",
+        "additional_value": "Germany",
+    },
+    "wholesale-cafe-supplies": {
+        "file": "sample_wholesale_cafe_supplies.csv",
+        "cols": {
+            "customer": "Account", "invoice": "Sales Order", "date": "Ship Date",
+            "pid": "Item No", "pname": "Description", "cat": "Product Group", "sub": "Product Line",
+            "qty": "Qty", "price": "Net Price", "sales": "Net Amount", "extra": "Region",
+        },
+        "filter_value": "Coffee and Tea",
+        "additional_value": "North",
+    },
 }
 
 

@@ -1,6 +1,8 @@
 function escapeCell(value) {
   if (value === null || value === undefined) return "";
-  const text = String(value);
+  let text = String(value);
+  // Stop spreadsheet programs from running text that starts with a formula character.
+  if (typeof value === "string" && /^[=+\-@\t\r]/.test(text) && !/^[+-]?\d+(\.\d+)?$/.test(text)) text = `'${text}`;
   return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 

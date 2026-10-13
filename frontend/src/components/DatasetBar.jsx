@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { listSamples } from "../lib/api.js";
 import { formatNumber } from "../lib/format.js";
 import { useData } from "../context/DataContext.jsx";
 import { ChevronIcon, CloseIcon, FileIcon, UploadIcon } from "./Icons.jsx";
@@ -25,23 +24,12 @@ export function useUploadHandler() {
 }
 
 export default function DatasetBar() {
-  const { dataset, loading, loadSample, clearDataset } = useData();
+  const { dataset, loading, loadSample, clearDataset, samples } = useData();
   const handleUpload = useUploadHandler();
-  const [samples, setSamples] = useState([]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const fileInput = useRef(null);
   const menu = useRef(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    listSamples()
-      .then((list) => !cancelled && setSamples(list))
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     if (!menuOpen) return undefined;
@@ -63,8 +51,13 @@ export default function DatasetBar() {
         <div className="dataset-chip" title={dataset.filename}>
           <FileIcon />
           <button type="button" className="chip-main" onClick={() => setPreviewOpen(true)} aria-label="Preview your data">
-            <span className="chip-name">{dataset.filename}</span>
-            <span className="chip-rows">{formatNumber(dataset.rows)} rows</span>
+            <span className="chip-name">
+              {dataset.filename}
+            </span>
+            <span className="chip-rows">
+              {formatNumber(dataset.rows)} rows
+              {dataset.source?.type === "sample" && <span className="badge">Sample</span>}
+            </span>
           </button>
           <button type="button" className="chip-clear" onClick={clearDataset} aria-label="Remove dataset">
             <CloseIcon size={14} />
@@ -79,7 +72,7 @@ export default function DatasetBar() {
           </button>
           {menuOpen && (
             <div className="menu" role="menu">
-              <div className="menu-heading">Try a ready made dataset</div>
+              <div className="menu-heading">Sample data</div>
               {samples.map((sample) => (
                 <button
                   key={sample.id}

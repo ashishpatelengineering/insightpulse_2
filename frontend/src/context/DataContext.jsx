@@ -1,5 +1,5 @@
-import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
-import { analyze as apiAnalyze, fetchSampleFile, inspectFile } from "../lib/api.js";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { analyze as apiAnalyze, fetchSampleFile, inspectFile, listSamples } from "../lib/api.js";
 import { suggestColumns, ROLES } from "../lib/autoMap.js";
 import { ALL_VALUE, MODES, MODE_BY_ID, buildParams, initialSelections } from "../modes/config.js";
 
@@ -10,7 +10,7 @@ function buildAllSelections(columns) {
   const suggestions = suggestColumns(columns, roleNames);
   const all = {};
   MODES.forEach((mode) => {
-    const modeRoles = [...new Set(mode.fields.map((f) => f.role).filter(Boolean))];
+    const modeRoles = [...new Set(mode.fields.flatMap((f) => [f.role, f.fallbackRole]).filter(Boolean))];
     all[mode.id] = initialSelections(mode, suggestColumns(columns, modeRoles));
   });
   return { all, suggestions };
@@ -24,7 +24,18 @@ export function DataProvider({ children }) {
   const [selections, setSelections] = useState({});
   const [results, setResults] = useState({});
   const [slow, setSlow] = useState(false);
+  const [samples, setSamples] = useState([]);
   const generation = useRef(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    listSamples()
+      .then((list) => !cancelled && setSamples(list))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const resetResults = () => setResults({});
 
@@ -103,7 +114,7 @@ export function DataProvider({ children }) {
       try {
         const data = await apiAnalyze(mode.api, dataset.file, params, { onSlow: () => setSlow(true) });
         if (mine !== generation.current) return;
-        setResults((current) => ({ ...current, [modeId]: { status: "done", data } }));
+        setResults((current) => ({ ...current, [modeId]: { status: "done", data, params: JSON.stringify(params) } }));
       } catch (error) {
         if (mine !== generation.current) return;
         setResults((current) => ({ ...current, [modeId]: { status: "error", error: error.message } }));
@@ -115,8 +126,8 @@ export function DataProvider({ children }) {
   );
 
   const value = useMemo(
-    () => ({ dataset, loading, loadingText, datasetError, selections, results, slow, loadUpload, loadSample, clearDataset, setSelection, runAnalysis, setDatasetError }),
-    [dataset, loading, loadingText, datasetError, selections, results, slow, loadUpload, loadSample, clearDataset, setSelection, runAnalysis]
+    () => ({ dataset, loading, loadingText, datasetError, selections, results, slow, samples, loadUpload, loadSample, clearDataset, setSelection, runAnalysis, setDatasetError }),
+    [dataset, loading, loadingText, datasetError, selections, results, slow, samples, loadUpload, loadSample, clearDataset, setSelection, runAnalysis]
   );
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

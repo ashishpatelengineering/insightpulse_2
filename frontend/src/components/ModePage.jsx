@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useData } from "../context/DataContext.jsx";
 import { buildParams } from "../modes/config.js";
-import DatasetBar from "./DatasetBar.jsx";
+import DatasetBar, { UploadButton } from "./DatasetBar.jsx";
 import DataGrid from "./DataGrid.jsx";
 import InfoPopover from "./InfoPopover.jsx";
 import InputsForm from "./InputsForm.jsx";
@@ -22,6 +22,7 @@ function StartPanel() {
   return (
     <div className="start-panel">
       <h2 className="start-title">Upload a CSV file to get started</h2>
+      <UploadButton primary />
     </div>
   );
 }

@@ -21,26 +21,18 @@ export function useUploadHandler() {
   };
 }
 
-export default function DatasetBar() {
-  const { dataset, loading, clearDataset } = useData();
+export function UploadButton({ primary = false }) {
+  const { loading } = useData();
   const handleUpload = useUploadHandler();
   const fileInput = useRef(null);
-
   return (
-    <div className="dataset-bar">
-      {dataset && (
-        <div className="dataset-chip" title={dataset.filename}>
-          <FileIcon />
-          <span className="chip-main">
-            <span className="chip-name">{dataset.filename}</span>
-          </span>
-          <button type="button" className="chip-clear" onClick={clearDataset} aria-label="Remove dataset">
-            <CloseIcon size={14} />
-          </button>
-        </div>
-      )}
-
-      <button type="button" className="btn btn-outline" onClick={() => fileInput.current?.click()} disabled={loading}>
+    <>
+      <button
+        type="button"
+        className={primary ? "btn btn-primary" : "btn btn-outline"}
+        onClick={() => fileInput.current?.click()}
+        disabled={loading}
+      >
         <UploadIcon /> Upload
       </button>
       <input
@@ -53,6 +45,26 @@ export default function DatasetBar() {
           event.target.value = "";
         }}
       />
+    </>
+  );
+}
+
+export default function DatasetBar() {
+  const { dataset, clearDataset } = useData();
+  if (!dataset) return null;
+
+  return (
+    <div className="dataset-bar">
+      <div className="dataset-chip" title={dataset.filename}>
+        <FileIcon />
+        <span className="chip-main">
+          <span className="chip-name">{dataset.filename}</span>
+        </span>
+        <button type="button" className="chip-clear" onClick={clearDataset} aria-label="Remove dataset">
+          <CloseIcon size={14} />
+        </button>
+      </div>
+      <UploadButton />
     </div>
   );
 }

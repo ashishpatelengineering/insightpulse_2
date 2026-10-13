@@ -87,7 +87,7 @@ button:disabled { cursor: not-allowed; }
 
 .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 22px; }
 .card-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
-.results-card { min-height: 160px; scroll-margin-top: 68px; }
+.results-card { scroll-margin-top: 68px; }
 .results-card > .alert { margin-bottom: 16px; }
 
 /* Buttons */
@@ -268,8 +268,8 @@ button:disabled { cursor: not-allowed; }
 .measures td:first-child { white-space: nowrap; }
 .measures td.muted { min-width: 260px; }
 .inputs-card { scroll-margin-top: 68px; }
-.start-panel { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; padding: 10px 0 4px; }
-.start-title { font-size: 20px; font-weight: 700; }
+.start-panel { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 160px; gap: 16px; }
+.start-title { font-size: 18px; font-weight: 600; color: var(--ink); }
 .start-text { max-width: 560px; }
 .start-or { margin-top: 10px; font-size: 13px; color: var(--muted); }
 .loaded-title { font-size: 16px; }

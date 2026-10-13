@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { compactNumber, formatMonth, formatNumber } from "../lib/format.js";
-import { Block, DataTable, Insights, KpiCard, KpiRow, Notes } from "../components/ui.jsx";
+import { Block, DataTable, KpiCard, KpiRow, Notes } from "../components/ui.jsx";
 
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
@@ -24,7 +24,7 @@ function ChartTooltip({ active, payload, label }) {
 }
 
 export default function ForecastResults({ data }) {
-  const { kpis, model, comparison, accuracy, history, forecast, insights, warnings, selection } = data;
+  const { kpis, model, comparison, accuracy, history, forecast, warnings, selection } = data;
 
   const chartData = useMemo(() => {
     const rows = history.map((h) => ({ month: h.month, history: h.value }));
@@ -99,8 +99,6 @@ export default function ForecastResults({ data }) {
           <span><i className="swatch area" /> Likely range</span>
         </div>
       </Block>
-
-      <Insights items={insights} />
 
       <Block title="Forecast by month" subtitle="Low and high estimates mark the likely range.">
         <DataTable columns={forecastColumns} rows={forecast} pageSize={12} downloadName="sales-forecast.csv" initialSort={{ key: "month", direction: "asc" }} />

@@ -1,6 +1,6 @@
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { formatDate, formatNumber, formatPercent } from "../lib/format.js";
-import { Block, DataTable, Insights, KpiCard, KpiRow, Notes } from "../components/ui.jsx";
+import { formatDate, formatNumber } from "../lib/format.js";
+import { Block, DataTable, KpiCard, KpiRow, Notes } from "../components/ui.jsx";
 
 const SEGMENT_COLORS = {
   Champions: "#1e3a5f",
@@ -21,13 +21,9 @@ function SegmentCard({ segment }) {
       <p className="muted">{segment.description}</p>
       <div className="segment-main">
         <strong>{formatNumber(segment.customers)}</strong>
-        <span>customers ({formatPercent(segment.pct_customers, 0)})</span>
+        <span>customers</span>
       </div>
       <dl className="stat-list">
-        <div>
-          <dt>Share of revenue</dt>
-          <dd>{formatPercent(segment.pct_revenue, 0)}</dd>
-        </div>
         <div>
           <dt>Average spend</dt>
           <dd>{formatNumber(segment.avg_spend)}</dd>
@@ -42,7 +38,7 @@ function SegmentCard({ segment }) {
 }
 
 export default function ClvResults({ data }) {
-  const { kpis, segments, customers, insights, warnings } = data;
+  const { kpis, segments, customers, warnings } = data;
   const chartData = segments.map((s) => ({
     name: s.segment,
     "Share of customers": s.pct_customers,
@@ -75,8 +71,6 @@ export default function ClvResults({ data }) {
         <KpiCard label="Average lifetime value" value={formatNumber(kpis.avg_spend)} sub="per customer" />
         <KpiCard label="Average order value" value={formatNumber(kpis.avg_order_value)} sub="per order" />
       </KpiRow>
-
-      <Insights items={insights} />
 
       <Block title="Customer segments" subtitle="Based on how recently, how often and how much customers buy.">
         <div className="segment-grid">

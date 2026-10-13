@@ -1,10 +1,8 @@
 import { useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
 import { useData } from "../context/DataContext.jsx";
 import { buildParams } from "../modes/config.js";
-import DatasetBar, { useUploadHandler } from "./DatasetBar.jsx";
+import DatasetBar from "./DatasetBar.jsx";
 import DataGrid from "./DataGrid.jsx";
-import { UploadIcon } from "./Icons.jsx";
 import InfoPopover from "./InfoPopover.jsx";
 import InputsForm from "./InputsForm.jsx";
 import { Alert, Spinner } from "./ui.jsx";
@@ -21,28 +19,9 @@ const VIEWS = {
 };
 
 function StartPanel() {
-  const handleUpload = useUploadHandler();
-  const fileInput = useRef(null);
   return (
     <div className="start-panel">
-      <h2 className="start-title">Add your data to get started</h2>
-      <p className="muted start-text">Upload a CSV file of your sales data.</p>
-      <button type="button" className="btn btn-primary" onClick={() => fileInput.current?.click()}>
-        <UploadIcon /> Upload a CSV file
-      </button>
-      <input
-        ref={fileInput}
-        type="file"
-        accept=".csv,.txt,text/csv"
-        hidden
-        onChange={(event) => {
-          handleUpload(event.target.files?.[0]);
-          event.target.value = "";
-        }}
-      />
-      <p className="start-or">
-        No file? <Link to="/samples">Download a sample dataset</Link>
-      </p>
+      <h2 className="start-title">Upload a CSV file to get started</h2>
     </div>
   );
 }
@@ -85,16 +64,6 @@ function ResultsPanel({ mode }) {
             Inputs changed. Click Analyze to update the results.
           </Alert>
         )}
-        <div className="results-head">
-          <span className="muted">Results for {dataset?.filename}</span>
-          <button
-            type="button"
-            className="btn btn-ghost small"
-            onClick={() => document.getElementById(`inputs-${mode.id}-card`)?.scrollIntoView({ behavior: "smooth", block: "start" })}
-          >
-            Change inputs
-          </button>
-        </div>
         <View data={result.data} />
       </>
     );
@@ -132,7 +101,7 @@ export default function ModePage({ mode }) {
       </div>
       {dataset && <DataGrid dataset={dataset} />}
       <ResultsPanel mode={mode} />
-      <InputsForm mode={mode} />
+      {dataset && <InputsForm mode={mode} />}
     </div>
   );
 }

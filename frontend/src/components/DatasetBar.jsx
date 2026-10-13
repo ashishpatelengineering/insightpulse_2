@@ -1,5 +1,4 @@
 import { useRef } from "react";
-import { formatNumber } from "../lib/format.js";
 import { useData } from "../context/DataContext.jsx";
 import { CloseIcon, FileIcon, UploadIcon } from "./Icons.jsx";
 
@@ -34,7 +33,6 @@ export default function DatasetBar() {
           <FileIcon />
           <span className="chip-main">
             <span className="chip-name">{dataset.filename}</span>
-            <span className="chip-rows">{formatNumber(dataset.rows)} rows</span>
           </span>
           <button type="button" className="chip-clear" onClick={clearDataset} aria-label="Remove dataset">
             <CloseIcon size={14} />

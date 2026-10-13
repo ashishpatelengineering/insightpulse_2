@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import Sidebar from "./components/Sidebar.jsx";
 import ModePage from "./components/ModePage.jsx";
 import HelpPage from "./components/HelpPage.jsx";
+import SamplesPage from "./components/SamplesPage.jsx";
 import { LogoMark } from "./components/Icons.jsx";
 import { MODES } from "./modes/config.js";
 
@@ -46,6 +47,7 @@ export default function App() {
             {MODES.map((mode) => (
               <Route key={mode.id} path={mode.path} element={<ModePage key={mode.id} mode={mode} />} />
             ))}
+            <Route path="/samples" element={<SamplesPage />} />
             <Route path="/help" element={<HelpPage />} />
             <Route path="*" element={<Navigate to={MODES[0].path} replace />} />
           </Routes>

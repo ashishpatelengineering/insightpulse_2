@@ -55,6 +55,7 @@ def test_inspect_returns_profile():
     category = next(c for c in body["columns"] if c["name"] == "Category")
     assert category["values"] == ["Furniture", "Home Decor", "Office Supplies", "Technology"]
     assert len(body["preview"]) == 8 and body["rows"] > 1000
+    assert len(body["view"]) == body["rows"] and len(body["view"][0]) == len(body["columns"])
 
 
 @pytest.mark.parametrize(

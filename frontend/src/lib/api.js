@@ -67,13 +67,6 @@ export async function listSamples() {
   return readJson(response);
 }
 
-export async function fetchSampleFile(sample) {
-  const response = await request(`/api/samples/${encodeURIComponent(sample.id)}`);
-  if (!response.ok) throw new ApiError("The sample dataset could not be loaded. Please try again.");
-  const blob = await response.blob();
-  return new File([blob], sample.filename, { type: "text/csv" });
-}
-
 export async function inspectFile(file, options) {
   const form = new FormData();
   form.append("file", file);

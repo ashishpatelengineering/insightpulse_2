@@ -11,6 +11,7 @@ import pandas as pd
 
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 MAX_ROWS = 300_000
+VIEW_ROWS = 20_000   # rows returned for the on-screen data table
 MAX_FILTER_VALUES = 300
 
 
@@ -122,6 +123,7 @@ def inspect_table(data: bytes, filename: str = "") -> dict:
             )
             rows = 0
             sample = preview = None
+            view_rows: list[list[str]] = []
             columns: list[str] = []
             missing: dict[str, int] = {}
             examples: dict[str, list[str]] = {}
@@ -139,6 +141,8 @@ def inspect_table(data: bytes, filename: str = "") -> dict:
                     values = {c: set() for c in columns}
                 elif len(sample) < PROFILE_SAMPLE_ROWS:
                     sample = pd.concat([sample, chunk.head(PROFILE_SAMPLE_ROWS - len(sample))], ignore_index=True)
+                if len(view_rows) < VIEW_ROWS:
+                    view_rows.extend(chunk[columns].head(VIEW_ROWS - len(view_rows)).fillna("").values.tolist())
                 rows += len(chunk)
                 if rows > MAX_ROWS:
                     raise _too_many_rows(rows)
@@ -169,6 +173,7 @@ def inspect_table(data: bytes, filename: str = "") -> dict:
         "rows": rows,
         "columns": profile_columns(sample, columns, missing, examples, values),
         "preview": preview,
+        "view": view_rows,
     }
 
 

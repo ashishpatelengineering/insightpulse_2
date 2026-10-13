@@ -1,5 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { analyze as apiAnalyze, fetchSampleFile, inspectFile, listSamples } from "../lib/api.js";
+import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
+import { analyze as apiAnalyze, inspectFile } from "../lib/api.js";
 import { suggestColumns, ROLES } from "../lib/autoMap.js";
 import { ALL_VALUE, MODES, MODE_BY_ID, buildParams, initialSelections } from "../modes/config.js";
 
@@ -24,22 +24,11 @@ export function DataProvider({ children }) {
   const [selections, setSelections] = useState({});
   const [results, setResults] = useState({});
   const [slow, setSlow] = useState(false);
-  const [samples, setSamples] = useState([]);
   const generation = useRef(0);
-
-  useEffect(() => {
-    let cancelled = false;
-    listSamples()
-      .then((list) => !cancelled && setSamples(list))
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const resetResults = () => setResults({});
 
-  const loadFile = useCallback(async (file, source) => {
+  const loadFile = useCallback(async (file) => {
     generation.current += 1;
     const mine = generation.current;
     setDatasetError("");
@@ -49,7 +38,7 @@ export function DataProvider({ children }) {
       const meta = await inspectFile(file, { onSlow: () => setLoadingText("Still working. The server may take up to a minute to start...") });
       if (mine !== generation.current) return;
       const { all } = buildAllSelections(meta.columns);
-      setDataset({ file, filename: meta.filename || file.name, rows: meta.rows, columns: meta.columns, preview: meta.preview, source });
+      setDataset({ file, filename: meta.filename || file.name, rows: meta.rows, columns: meta.columns, view: meta.view });
       setSelections(all);
       resetResults();
     } catch (error) {
@@ -60,27 +49,7 @@ export function DataProvider({ children }) {
     }
   }, []);
 
-  const loadUpload = useCallback((file) => loadFile(file, { type: "upload" }), [loadFile]);
-
-  const loadSample = useCallback(
-    async (sample) => {
-      generation.current += 1;
-      const mine = generation.current;
-      setDatasetError("");
-      setLoading(true);
-      setLoadingText("Loading sample data...");
-      try {
-        const file = await fetchSampleFile(sample);
-        if (mine !== generation.current) return;
-        await loadFile(file, { type: "sample", id: sample.id, name: sample.name });
-      } catch (error) {
-        if (mine !== generation.current) return;
-        setDatasetError(error.message);
-        setLoading(false);
-      }
-    },
-    [loadFile]
-  );
+  const loadUpload = useCallback((file) => loadFile(file), [loadFile]);
 
   const clearDataset = useCallback(() => {
     generation.current += 1;
@@ -126,8 +95,8 @@ export function DataProvider({ children }) {
   );
 
   const value = useMemo(
-    () => ({ dataset, loading, loadingText, datasetError, selections, results, slow, samples, loadUpload, loadSample, clearDataset, setSelection, runAnalysis, setDatasetError }),
-    [dataset, loading, loadingText, datasetError, selections, results, slow, samples, loadUpload, loadSample, clearDataset, setSelection, runAnalysis]
+    () => ({ dataset, loading, loadingText, datasetError, selections, results, slow, loadUpload, clearDataset, setSelection, runAnalysis, setDatasetError }),
+    [dataset, loading, loadingText, datasetError, selections, results, slow, loadUpload, clearDataset, setSelection, runAnalysis]
   );
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

@@ -17,7 +17,11 @@ export default function Sidebar() {
           <span className="side-label">{mode.shortTitle}</span>
         </NavLink>
       ))}
-      <NavLink to="/help" className={({ isActive }) => `side-link side-help${isActive ? " active" : ""}`} title="Help" aria-label="Help">
+      <NavLink to="/samples" className={({ isActive }) => `side-link side-help${isActive ? " active" : ""}`} title="Sample Datasets" aria-label="Sample Datasets">
+        <ModeIcon name="samples" />
+        <span className="side-label">Sample Datasets</span>
+      </NavLink>
+      <NavLink to="/help" className={({ isActive }) => `side-link${isActive ? " active" : ""}`} title="Help" aria-label="Help">
         <ModeIcon name="help" />
         <span className="side-label">Help</span>
       </NavLink>

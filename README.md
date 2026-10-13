@@ -1,6 +1,6 @@
 # InsightPulse
 
-A web app that turns a sales CSV file into business insights. Upload a file or choose a sample dataset, check the column matches, and click Analyze.
+A web app that turns a sales CSV file into business insights. Download a sample dataset or use your own CSV file, upload it, check the column matches, and click Analyze. One uploaded file is used by all four analyses and is shown in a scrolling table.
 
 Front end: React, Vite and Recharts. Back end: FastAPI with pandas, scipy and statsmodels.
 
@@ -36,7 +36,7 @@ Accuracy comes from a rolling origin back test: from up to 12 starting points in
 
 ## Sample data
 
-Five generated datasets are in `backend/data/samples`. They use different column names, date formats and layouts, and each works in all four analyses.
+Five generated datasets can be downloaded from the Sample Datasets page (also in `backend/data/samples`). They use different column names, date formats and layouts, and each works in all four analyses.
 
 - `sample_office_home_retail.csv`
 - `sample_grocery_supermarket.csv`

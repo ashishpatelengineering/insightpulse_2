@@ -12,7 +12,7 @@ export const MODES = [
     api: "clv",
     path: "/clv",
     title: "Customer Lifetime Value",
-    shortTitle: "Lifetime Value",
+    shortTitle: "Customer Lifetime Value",
     icon: "clv",
     subtitle: "Groups customers by how recently, how often and how much they buy.",
     info: {

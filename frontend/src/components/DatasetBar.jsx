@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { formatNumber } from "../lib/format.js";
 import { useData } from "../context/DataContext.jsx";
-import { ChevronIcon, CloseIcon, FileIcon, UploadIcon } from "./Icons.jsx";
-import PreviewModal from "./PreviewModal.jsx";
+import { CloseIcon, FileIcon, UploadIcon } from "./Icons.jsx";
 
 const MAX_BYTES = 25 * 1024 * 1024;
 
@@ -24,73 +23,22 @@ export function useUploadHandler() {
 }
 
 export default function DatasetBar() {
-  const { dataset, loading, loadSample, clearDataset, samples } = useData();
+  const { dataset, loading, clearDataset } = useData();
   const handleUpload = useUploadHandler();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [previewOpen, setPreviewOpen] = useState(false);
   const fileInput = useRef(null);
-  const menu = useRef(null);
-
-  useEffect(() => {
-    if (!menuOpen) return undefined;
-    const onPointer = (event) => {
-      if (menu.current && !menu.current.contains(event.target)) setMenuOpen(false);
-    };
-    const onKey = (event) => event.key === "Escape" && setMenuOpen(false);
-    document.addEventListener("pointerdown", onPointer);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("pointerdown", onPointer);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [menuOpen]);
 
   return (
     <div className="dataset-bar">
       {dataset && (
         <div className="dataset-chip" title={dataset.filename}>
           <FileIcon />
-          <button type="button" className="chip-main" onClick={() => setPreviewOpen(true)} aria-label="Preview your data">
-            <span className="chip-name">
-              {dataset.filename}
-            </span>
-            <span className="chip-rows">
-              {formatNumber(dataset.rows)} rows
-              {dataset.source?.type === "sample" && <span className="badge">Sample</span>}
-            </span>
-          </button>
+          <span className="chip-main">
+            <span className="chip-name">{dataset.filename}</span>
+            <span className="chip-rows">{formatNumber(dataset.rows)} rows</span>
+          </span>
           <button type="button" className="chip-clear" onClick={clearDataset} aria-label="Remove dataset">
             <CloseIcon size={14} />
           </button>
-        </div>
-      )}
-
-      {samples.length > 0 && (
-        <div className="menu-wrap" ref={menu}>
-          <button type="button" className="btn btn-ghost" onClick={() => setMenuOpen((o) => !o)} aria-haspopup="menu" aria-expanded={menuOpen} disabled={loading}>
-            Sample data <ChevronIcon />
-          </button>
-          {menuOpen && (
-            <div className="menu" role="menu">
-              <div className="menu-heading">Sample data</div>
-              {samples.map((sample) => (
-                <button
-                  key={sample.id}
-                  type="button"
-                  role="menuitem"
-                  className="menu-item"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    loadSample(sample);
-                  }}
-                >
-                  <span className="menu-item-title">{sample.name}</span>
-                  <span className="menu-item-text">{sample.description}</span>
-                  <span className="menu-item-meta">{formatNumber(sample.rows)} rows</span>
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       )}
 
@@ -107,7 +55,6 @@ export default function DatasetBar() {
           event.target.value = "";
         }}
       />
-      {previewOpen && dataset && <PreviewModal dataset={dataset} onClose={() => setPreviewOpen(false)} />}
     </div>
   );
 }

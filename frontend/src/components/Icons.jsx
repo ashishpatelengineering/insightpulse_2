@@ -51,6 +51,13 @@ export function ModeIcon({ name, size = 28 }) {
           <path d="m8 12 6-4.5 5 2.5 8-6.5M23 3.5h4v4" />
         </svg>
       );
+    case "samples":
+      return (
+        <svg {...props}>
+          <rect x="4.5" y="5" width="23" height="22" rx="2.5" />
+          <path d="M4.5 11.5h23M4.5 18h23M12 11.5V27M20 11.5V27" />
+        </svg>
+      );
     case "help":
       return (
         <svg {...props}>

@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { useData } from "../context/DataContext.jsx";
 import { buildParams } from "../modes/config.js";
 import DatasetBar, { useUploadHandler } from "./DatasetBar.jsx";
-import PreviewModal from "./PreviewModal.jsx";
+import DataGrid from "./DataGrid.jsx";
 import { UploadIcon } from "./Icons.jsx";
-import { formatNumber } from "../lib/format.js";
 import InfoPopover from "./InfoPopover.jsx";
 import InputsForm from "./InputsForm.jsx";
 import { Alert, Spinner } from "./ui.jsx";
@@ -21,15 +21,12 @@ const VIEWS = {
 };
 
 function StartPanel() {
-  const { samples, loadSample } = useData();
   const handleUpload = useUploadHandler();
   const fileInput = useRef(null);
   return (
     <div className="start-panel">
       <h2 className="start-title">Add your data to get started</h2>
-      <p className="muted start-text">
-        Upload a CSV file of your sales data, or try a sample dataset.
-      </p>
+      <p className="muted start-text">Upload a CSV file of your sales data.</p>
       <button type="button" className="btn btn-primary" onClick={() => fileInput.current?.click()}>
         <UploadIcon /> Upload a CSV file
       </button>
@@ -43,38 +40,9 @@ function StartPanel() {
           event.target.value = "";
         }}
       />
-      {samples.length > 0 && (
-        <>
-          <p className="start-or">or try a sample dataset</p>
-          <div className="sample-grid">
-            {samples.map((sample) => (
-              <button key={sample.id} type="button" className="sample-card" onClick={() => loadSample(sample)}>
-                <span className="sample-name">{sample.name}</span>
-                <span className="sample-text">{sample.description}</span>
-                <span className="sample-meta">{formatNumber(sample.rows)} rows</span>
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-function LoadedPanel({ dataset }) {
-  const [preview, setPreview] = useState(false);
-  return (
-    <div className="loaded-panel">
-      <div className="loaded-title">
-        <strong>{dataset.filename}</strong> is loaded: {formatNumber(dataset.rows)} rows and {dataset.columns.length} columns.
-      </div>
-      <p className="muted">
-        Check the column matches below, then click Analyze.
+      <p className="start-or">
+        No file? <Link to="/samples">Download a sample dataset</Link>
       </p>
-      <button type="button" className="btn btn-outline small" onClick={() => setPreview(true)}>
-        Preview the data
-      </button>
-      {preview && <PreviewModal dataset={dataset} onClose={() => setPreview(false)} />}
     </div>
   );
 }
@@ -131,8 +99,10 @@ function ResultsPanel({ mode }) {
       </>
     );
   } else {
-    body = dataset ? <LoadedPanel dataset={dataset} /> : <StartPanel />;
+    body = dataset ? null : <StartPanel />;
   }
+
+  if (!body && !(datasetError && !loading)) return null;
 
   return (
     <section className="card results-card" ref={panel} aria-live="polite" aria-busy={loading || result?.status === "loading"}>
@@ -143,6 +113,7 @@ function ResultsPanel({ mode }) {
 }
 
 export default function ModePage({ mode }) {
+  const { dataset } = useData();
   useEffect(() => {
     document.title = `${mode.title} | InsightPulse`;
   }, [mode.title]);
@@ -159,6 +130,7 @@ export default function ModePage({ mode }) {
         </div>
         <DatasetBar />
       </div>
+      {dataset && <DataGrid dataset={dataset} />}
       <ResultsPanel mode={mode} />
       <InputsForm mode={mode} />
     </div>

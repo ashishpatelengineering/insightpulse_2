@@ -1,6 +1,6 @@
 # InsightPulse
 
-A web app that turns a sales CSV file into business insights. Download a sample dataset or use your own CSV file, upload it, check the column matches, and click Analyze. One uploaded file is used by all four analyses and is shown in a scrolling table.
+[InsightPulse](https://insightpulse-2-d21f.onrender.com/clv) turns a sales CSV file into business insights. Download a sample dataset or use your own CSV file, upload it, check the column matches, and click Analyze. One uploaded file is used by all four analyses and is shown in a scrolling table.
 
 Front end: React, Vite and Recharts. Back end: FastAPI with pandas, scipy and statsmodels.
 

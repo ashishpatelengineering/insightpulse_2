@@ -1,5 +1,4 @@
 import { useEffect, useId, useState } from "react";
-import { Link } from "react-router-dom";
 import { MODES } from "../modes/config.js";
 import { SEGMENTS, TERMS, TERM_GROUPS } from "../content/text.js";
 import { EXAMPLES } from "../content/examples.js";
@@ -109,9 +108,15 @@ export default function HelpPage() {
               {MODES.map((mode) => (
                 <tr key={mode.id}>
                   <td>
-                    <Link to={mode.path}>
+                    <a
+                      href={`#${mode.id}`}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        document.getElementById(mode.id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }}
+                    >
                       <strong>{mode.title}</strong>
-                    </Link>
+                    </a>
                   </td>
                   <td>{QUESTIONS[mode.id].question}</td>
                   <td className="muted">{QUESTIONS[mode.id].needs}</td>

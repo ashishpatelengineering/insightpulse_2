@@ -17,7 +17,7 @@ export const MODES = [
     info: {
       bullets: [
         "Shows what each customer has spent and which customers matter most.",
-        "Customers are placed in five groups, from Champions to Hibernating.",
+        "Customers are placed in five groups: Champions, Loyal Customers, Promising Customers, At Risk and Hibernating.",
       ],
     },
     fields: [

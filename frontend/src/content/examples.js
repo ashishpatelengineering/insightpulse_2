@@ -384,15 +384,77 @@ const basketExample = {
 // Forecasting
 // ---------------------------------------------------------------------------
 const forecastExample = {
-  lead: "A store forecasts three months and compares the forecast with actual sales to measure accuracy. Sales are in $ thousands.",
+  lead: "A store wants to forecast monthly sales. All sales figures are in $ thousands.",
   steps: [
     {
       title: "Total the sales by month",
       text: ["The rows of the file are added up by month. For example, three January rows of 50, 30 and 20 give January sales of **100**."],
     },
     {
+      title: "Smooth the history (exponential smoothing)",
+      text: [
+        "Exponential smoothing keeps a running estimate of normal monthly sales, called the level. Each month, the level moves toward the latest actual sales:",
+        "**New level = weight × actual sales + (1 - weight) × previous level**",
+        "The weight is a number between 0 and 1. A higher weight makes recent months count more. The app chooses the weight that fits your history best. This example uses a weight of 0.5, and the first level is January's sales.",
+      ],
+      table: {
+        head: ["Month", "Actual sales", "Calculation", "New level"],
+        align: ["left", "right", "left", "right"],
+        rows: [
+          ["January", "100", "First month, so the level is the actual sales", "**100**"],
+          ["February", "108", "0.5 × 108 + 0.5 × 100", "**104**"],
+          ["March", "104", "0.5 × 104 + 0.5 × 104", "**104**"],
+          ["April", "112", "0.5 × 112 + 0.5 × 104", "**108**"],
+          ["May", "116", "0.5 × 116 + 0.5 × 108", "**112**"],
+          ["June", "120", "0.5 × 120 + 0.5 × 112", "**116**"],
+        ],
+      },
+      after: ["The latest level is the forecast. Every coming month is forecast at **116**."],
+    },
+    {
+      title: "Add a trend when sales are rising or falling",
+      text: [
+        "The app also tries a version that tracks the trend, the average monthly change in sales. It keeps the trend up to date in the same way as the level, and fades it gradually so that it does not run on forever. The fade is a damping factor between 0 and 1.",
+        "**Forecast for month h = level + trend × (damping + damping² + ... + damping^h)**",
+        "For example, with a level of 116, a trend of 4 per month and a damping factor of 0.8:",
+      ],
+      table: {
+        head: ["Month ahead", "Calculation", "Forecast"],
+        align: ["right", "left", "right"],
+        rows: [
+          ["1", "116 + 4 × 0.8", "**119.2**"],
+          ["2", "116 + 4 × (0.8 + 0.64)", "**121.8**"],
+          ["3", "116 + 4 × (0.8 + 0.64 + 0.512)", "**123.8**"],
+        ],
+      },
+      after: ["The app fits the version with a trend and the version without one, and keeps the one that fits your history better."],
+    },
+    {
+      title: "Adjust for the yearly pattern",
+      text: [
+        "Many businesses have a yearly pattern, such as a busy December. The app separates this pattern from the underlying trend using STL (Seasonal and Trend decomposition using Loess). It then forecasts the underlying trend and applies the pattern back to each month.",
+        "Each month gets a seasonal factor. A factor of 1.30 means that month is usually 30% above the underlying trend. For example, if the forecast before the yearly pattern is 120 for each month:",
+      ],
+      table: {
+        head: ["Month", "Forecast before the yearly pattern", "Seasonal factor", "Forecast"],
+        align: ["left", "right", "right", "right"],
+        rows: [
+          ["November", "120", "0.90", "120 × 0.90 = **108**"],
+          ["December", "120", "1.30", "120 × 1.30 = **156**"],
+          ["January", "120", "0.80", "120 × 0.80 = **96**"],
+        ],
+      },
+      after: ["Learning a yearly pattern needs at least two years of history."],
+    },
+    {
+      title: "Show a likely range",
+      text: ["Each forecast month comes with a low and a high estimate that form a 95% likely range. For example, a forecast of 116 might come with a low estimate of 104 and a high estimate of 128."],
+    },
+    {
       title: "Test the forecast on past months",
-      text: ["The app hides the latest months, forecasts them from the earlier history and compares each forecast with the actual sales. Here three months are tested."],
+      text: [
+        "To measure accuracy, the app hides the latest months, forecasts them from the earlier history and compares each forecast with the actual sales. This example tests three months.",
+      ],
       table: {
         head: ["Month", "Forecast", "Actual", "Error (forecast - actual)", "Absolute error", "Percentage error"],
         align: ["left", "right", "right", "right", "right", "left"],
@@ -438,7 +500,7 @@ const forecastExample = {
     {
       title: "Choose the method",
       text: [
-        "The app runs this test from up to 12 starting points in the history and combines the results. It does this for exponential smoothing and for exponential smoothing with a yearly seasonal adjustment, and uses the method with the lower error.",
+        "The test is repeated from up to 12 starting points in the history, and the results are combined. It is run for exponential smoothing and for exponential smoothing with the yearly adjustment. The method with the lower error is used for your forecast.",
       ],
     },
   ],

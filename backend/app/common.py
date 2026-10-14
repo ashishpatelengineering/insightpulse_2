@@ -66,8 +66,8 @@ def _read_csv(data: bytes, **kwargs):
             last_error = error
             continue
         except (pd.errors.EmptyDataError, pd.errors.ParserError):
-            raise UserError("We could not find a table in this file. Please upload a CSV with a header row.")
-    raise UserError("We could not read this file. Please save it as a CSV (UTF-8) and try again.") from last_error
+            raise UserError("No table was found in this file. Please upload a CSV with a header row.")
+    raise UserError("This file could not be read. Please save it as a CSV (UTF-8) and try again.") from last_error
 
 
 def _too_many_rows(rows: int) -> UserError:
@@ -92,10 +92,10 @@ def read_table(data: bytes, filename: str = "", wanted: Iterable[str] | None = N
     df = _read_csv(data, **kwargs)
     df = _clean_columns(df)
     if wanted is None and df.shape[1] < 2:
-        raise UserError("We could not find at least two columns. Please check that the file is a comma separated CSV.")
+        raise UserError("At least two columns are needed. Please check that the file is a comma separated CSV.")
     if wanted is not None and df.shape[1] == 0:
         raise UserError(
-            "The columns you selected were not found in this file. "
+            "The selected columns were not found in this file. "
             "Please check that it is a comma separated CSV with column names in the first row."
         )
     if df.empty:
@@ -161,13 +161,13 @@ def inspect_table(data: bytes, filename: str = "") -> dict:
             last_error = error
             continue
         except (pd.errors.EmptyDataError, pd.errors.ParserError):
-            raise UserError("We could not find a table in this file. Please upload a CSV with a header row.")
+            raise UserError("No table was found in this file. Please upload a CSV with a header row.")
     else:
-        raise UserError("We could not read this file. Please save it as a CSV (UTF-8) and try again.") from last_error
+        raise UserError("This file could not be read. Please save it as a CSV (UTF-8) and try again.") from last_error
     if sample is None:
         raise UserError("The file has a header row but no data rows.")
     if len(columns) < 2:
-        raise UserError("We could not find at least two columns. Please check that the file is a comma separated CSV.")
+        raise UserError("At least two columns are needed. Please check that the file is a comma separated CSV.")
     return {
         "filename": filename,
         "rows": rows,
@@ -354,7 +354,7 @@ def select_columns(df: pd.DataFrame, params: dict, spec: Iterable[tuple[str, str
                 continue
             raise UserError(f"Please select the {label}.")
         if value not in df.columns:
-            raise UserError(f"The column '{value}' chosen for the {label} was not found in your file. Please upload the file again or choose another column.")
+            raise UserError(f"The column '{value}' chosen for the {label} was not found in the file. Please upload the file again or choose another column.")
         chosen[key] = value
     seen: dict[str, str] = {}
     for key, col in chosen.items():
@@ -399,7 +399,7 @@ def build_frame(df: pd.DataFrame, spec: dict[str, tuple[str, str, str]]) -> tupl
     if len(frame) < before:
         warnings.append(f"Skipped {before - len(frame):,} of {before:,} rows that had missing or unreadable values in the selected columns.")
     if frame.empty:
-        raise UserError("No usable rows were found with the selected columns. Please check that you matched each input to the right column.")
+        raise UserError("No usable rows were found with the selected columns. Please check that each input is matched to the correct column.")
     for name, (_, kind, _) in spec.items():
         if kind in ("text", "label"):
             frame[name] = frame[name].astype(str)

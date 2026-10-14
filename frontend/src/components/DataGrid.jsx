@@ -20,7 +20,7 @@ export default function DataGrid({ dataset }) {
   const shown = rows.length;
 
   return (
-    <section className="card data-card" aria-label="Your data">
+    <section className="card data-card" aria-label="Data preview">
       <div className="data-head">
         <h2>Data</h2>
         <span className="muted">

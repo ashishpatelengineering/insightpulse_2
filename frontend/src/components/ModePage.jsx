@@ -41,7 +41,7 @@ function ResultsPanel({ mode }) {
   if (loading) {
     body = <Spinner label={loadingText || "Loading..."} />;
   } else if (result?.status === "loading") {
-    body = <Spinner label={slow ? "Still working. The server may take up to a minute to wake up..." : "Analyzing your data..."} />;
+    body = <Spinner label={slow ? "Still working. The server may take up to a minute to wake up..." : "Analyzing data..."} />;
   } else if (result?.status === "error") {
     body = (
       <Alert

@@ -448,7 +448,7 @@ const forecastExample = {
           ["Previous level", "the level after the month before"],
         ],
       },
-      afterFormula: ["A higher weight makes recent months count more. The app chooses the weight that fits your history best. This example uses a weight of 0.5, and the first level is January's sales."],
+      afterFormula: ["A higher weight makes recent months count more. The app chooses the weight that fits the history best. This example uses a weight of 0.5, and the first level is January's sales."],
       table: {
         head: ["Month", "Actual sales", "Calculation", "New level"],
         align: ["left", "right", "left", "right"],
@@ -487,7 +487,7 @@ const forecastExample = {
           ["3", "116 + 4 × (0.8 + 0.64 + 0.512)", "**123.8**"],
         ],
       },
-      after: ["The app fits the version with a trend and the version without one, and keeps the one that fits your history better."],
+      after: ["The app fits the version with a trend and the version without one, and keeps the one that fits the history better."],
     },
     {
       title: "Adjust for the yearly pattern",

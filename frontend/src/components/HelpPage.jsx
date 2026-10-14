@@ -7,11 +7,11 @@ import GroupGrid from "./GroupGrid.jsx";
 
 const QUESTIONS = {
   clv: {
-    question: "Who are my best customers?",
+    question: "Who are the best customers?",
     needs: "Customer, Date, Sales",
   },
   recommendation: {
-    question: "Which products should I offer each customer next?",
+    question: "Which products should be offered to each customer next?",
     needs: "Customer, Product",
   },
   basket: {
@@ -19,7 +19,7 @@ const QUESTIONS = {
     needs: "Product, Order",
   },
   forecast: {
-    question: "What will my sales be over the coming months?",
+    question: "What will sales be over the coming months?",
     needs: "Sales, Date",
   },
 };

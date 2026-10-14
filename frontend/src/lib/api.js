@@ -6,7 +6,7 @@ const MAX_ATTEMPTS = 4;
 export class ApiError extends Error {}
 
 const NETWORK_MESSAGE =
-  "We could not reach the server. Please check your internet connection and try again in a moment.";
+  "The server could not be reached. Please check the internet connection and try again in a moment.";
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -56,7 +56,7 @@ async function readJson(response) {
   if (!response.ok) {
     const message =
       (body && (body.error || (typeof body.detail === "string" ? body.detail : null))) ||
-      "Something went wrong. Please try again.";
+      "The request could not be completed. Please try again.";
     throw new ApiError(message);
   }
   return body;

@@ -23,7 +23,7 @@ class ErrorBoundary extends Component {
     return (
       <div className="fatal">
         <h1>Something went wrong</h1>
-        <p>The page could not be shown. Please reload and try again.</p>
+        <p>The page could not be displayed. Please reload the page and try again.</p>
         <button type="button" className="btn btn-primary" onClick={() => window.location.reload()}>
           Reload page
         </button>

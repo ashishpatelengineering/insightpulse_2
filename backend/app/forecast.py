@@ -282,7 +282,7 @@ def _complete_month_range(dates: pd.Series) -> tuple[pd.Period, pd.Period, list[
     end = last.to_period("M")
     if (end - start).n >= 6:
         if first.day > 5:
-            notes.append(f"{calendar.month_name[first.month]} {first.year} was left out because your data starts part way through that month.")
+            notes.append(f"{calendar.month_name[first.month]} {first.year} was left out because the data starts part way through that month.")
             start = start + 1
         days_in_last = calendar.monthrange(last.year, last.month)[1]
         if last.day < days_in_last - 4:
@@ -323,7 +323,7 @@ def run(df: pd.DataFrame, params: dict) -> dict:
     filter_col = cols.get("filter_column")
     filter_value = params.get("filter_value")
     if filter_col and filter_value in (None, ""):
-        raise UserError("Please choose a value for the Filter Column, or choose All to forecast your total sales.")
+        raise UserError("Please choose a value for the Filter Column, or choose All to forecast total sales.")
     additional_col = cols.get("additional_column")
     additional_value = params.get("additional_value")
     if additional_col and additional_value in (None, ""):
@@ -443,7 +443,7 @@ def run(df: pd.DataFrame, params: dict) -> dict:
                     f"({bench_err:.1f}% against {model_err:.1f}%)."
                 )
     if periods > len(y):
-        warnings.append("The forecast period is longer than your history, so later months are less certain.")
+        warnings.append("The forecast period is longer than the history, so later months are less certain.")
 
     return {
         "mode": "forecast",

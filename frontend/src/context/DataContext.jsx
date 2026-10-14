@@ -33,7 +33,7 @@ export function DataProvider({ children }) {
     const mine = generation.current;
     setDatasetError("");
     setLoading(true);
-    setLoadingText("Reading your file...");
+    setLoadingText("Reading file...");
     try {
       const meta = await inspectFile(file, { onSlow: () => setLoadingText("Still working. The server may take up to a minute to start...") });
       if (mine !== generation.current) return;

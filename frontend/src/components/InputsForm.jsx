@@ -48,7 +48,7 @@ function ValueSelect({ id, field, value, column, disabled, onChange }) {
       type="text"
       value={value === ALL_VALUE ? "" : value ?? ""}
       disabled={disabled}
-      placeholder="Type a value exactly as in your file, or leave empty for All"
+      placeholder="Type a value exactly as it appears in the file, or leave empty for All"
       onChange={(event) => onChange(event.target.value.trim() === "" ? ALL_VALUE : event.target.value)}
     />
   );

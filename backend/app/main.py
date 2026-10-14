@@ -34,7 +34,7 @@ app.add_middleware(
 )
 
 GENERIC_ERROR = (
-    "Something went wrong while analyzing your data. Please check that each input is matched to the right column and try again."
+    "Something went wrong while analyzing the data. Please check that each input is matched to the correct column and try again."
 )
 
 

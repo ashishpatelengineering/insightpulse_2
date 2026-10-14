@@ -74,7 +74,7 @@ export const MODES = [
     icon: "forecast",
     info: {
       bullets: [
-        "Predicts sales for the coming months from your sales history.",
+        "Predicts sales for the coming months from the sales history.",
         "Forecast one group, such as a category or region, or all sales.",
         FORECAST_METHOD,
       ],

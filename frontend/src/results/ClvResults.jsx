@@ -43,7 +43,7 @@ export default function ClvResults({ data }) {
     { key: "customer_id", label: "Customer" },
     {
       key: "segment",
-      label: "Segment",
+      label: "Customer group",
       render: (row) => (
         <span className="pill" style={{ background: `${SEGMENT_COLORS[row.segment]}22`, color: SEGMENT_COLORS[row.segment] }}>
           {row.segment}
@@ -66,7 +66,7 @@ export default function ClvResults({ data }) {
         <KpiCard label="Average order value" value={formatNumber(kpis.avg_order_value)} sub="per order" tip={TERMS.avgOrderValue.meaning} />
       </KpiRow>
 
-      <Block title="Customer segments" tip={BLOCK_TEXT.segments}>
+      <Block title="Customer groups" tip={BLOCK_TEXT.segments}>
         <div className="segment-grid">
           {segments.map((segment) => (
             <SegmentCard key={segment.segment} segment={segment} />
@@ -74,14 +74,14 @@ export default function ClvResults({ data }) {
         </div>
       </Block>
 
-      <Block title="Who drives your revenue" tip={BLOCK_TEXT.revenueShare}>
+      <Block title="Who drives revenue" tip={BLOCK_TEXT.revenueShare}>
         <div className="chart" style={{ height: 300 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 4 }} barGap={6}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e8ebef" />
               <XAxis dataKey="name" tickLine={false} axisLine={{ stroke: "#d0d5db" }} tick={{ fontSize: 12 }} />
               <YAxis tickFormatter={(v) => `${v}%`} tickLine={false} axisLine={false} width={48} />
-              <Tooltip formatter={(value) => `${value}%`} cursor={{ fill: "rgba(30,58,95,0.06)" }} />
+              <Tooltip separator=": " formatter={(value) => `${value}%`} cursor={{ fill: "rgba(30,58,95,0.06)" }} />
               <Legend />
               <Bar dataKey="Share of customers" fill="#b9c4d0" radius={[4, 4, 0, 0]} />
               <Bar dataKey="Share of revenue" fill="#1e3a5f" radius={[4, 4, 0, 0]} />
@@ -97,8 +97,8 @@ export default function ClvResults({ data }) {
           pageSize={10}
           searchLabel="Search by customer"
           searchText={(row) => row.customer_id}
-          filter={{ label: "All segments", options: segments.map((s) => s.segment), get: (row) => row.segment }}
-          downloadName="customer-segments.csv"
+          filter={{ label: "All groups", options: segments.map((s) => s.segment), get: (row) => row.segment }}
+          downloadName="customer-groups.csv"
           initialSort={{ key: "total_spend", direction: "desc" }}
         />
       </Block>

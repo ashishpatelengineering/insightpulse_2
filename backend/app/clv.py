@@ -113,7 +113,7 @@ def run(df: pd.DataFrame, params: dict) -> dict:
         )
     if len(customers) < MIN_CUSTOMERS:
         raise UserError(
-            f"At least {MIN_CUSTOMERS} different customers are needed to rank customers fairly. Your file has {len(customers)}."
+            f"At least {MIN_CUSTOMERS} different customers are needed to rank customers fairly. The file has {len(customers)}."
         )
 
     customers["avg_order_value"] = customers["gross_spend"] / customers["orders"]
@@ -151,7 +151,7 @@ def run(df: pd.DataFrame, params: dict) -> dict:
     champions = by_name.get("Champions")
     if champions:
         insights.append(
-            f"{_pct(champions['pct_customers'])}% of your customers ({champions['customers']:,} Champions) generate {_pct(champions['pct_revenue'])}% of revenue."
+            f"{_pct(champions['pct_customers'])}% of customers ({champions['customers']:,} Champions) generate {_pct(champions['pct_revenue'])}% of revenue."
         )
     at_risk = by_name.get("At Risk")
     if at_risk:
@@ -162,7 +162,7 @@ def run(df: pd.DataFrame, params: dict) -> dict:
     table = customers.sort_values("total_spend", ascending=False)
     if len(table) > MAX_CUSTOMER_ROWS:
         table = table.head(MAX_CUSTOMER_ROWS)
-        warnings.append(f"The customer list shows the top {MAX_CUSTOMER_ROWS:,} customers by spend. Segment totals include everyone.")
+        warnings.append(f"The customer list shows the top {MAX_CUSTOMER_ROWS:,} customers by spend. Group totals include everyone.")
     rows = [
         {
             "customer_id": str(cid),

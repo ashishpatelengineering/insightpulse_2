@@ -87,7 +87,7 @@ export default function RecommendationResults({ data }) {
           <Alert tone="info">
             {typed.trim() === ""
               ? "Type or choose a customer ID to see their suggested products."
-              : "No match yet. Choose a customer ID from the list."}
+              : "No matching customer ID. Choose a customer ID from the list."}
           </Alert>
         ) : (
           <div className="rec-layout">

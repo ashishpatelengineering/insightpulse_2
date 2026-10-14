@@ -128,7 +128,7 @@ export const BLOCK_TEXT = {
 
 /** The forecasting method, in one place. Used by the Help page and the tooltip on the forecast chart. */
 export const FORECAST_METHOD =
-  "The forecast is based on your past sales, with the most weight on recent months. It follows their direction without assuming sales will keep rising or falling forever. With about 30 months of history or more, the app also checks whether a yearly pattern, such as a busy December, would have predicted past months better. It uses the pattern only when it clearly does.";
+  "The forecast is based on past sales, with the most weight on recent months. It follows their direction without assuming sales will keep rising or falling forever. With about 30 months of history or more, the app also checks whether a yearly pattern, such as a busy December, would have predicted past months better. It uses the pattern only when it clearly does.";
 
 export const TERM_GROUPS = {
   clv: ["rfm"],

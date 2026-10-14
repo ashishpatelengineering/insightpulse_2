@@ -437,9 +437,9 @@ const forecastExample = {
       text: ["The rows of the file are added up by month. For example, three January rows of 50, 30 and 20 give January sales of **100**."],
     },
     {
-      title: "Smooth the history (exponential smoothing)",
+      title: "Smooth the history",
       text: [
-        "Exponential smoothing keeps a running estimate of normal monthly sales, called the level. Each month, the level moves toward the latest actual sales:",
+        "The forecast uses the Holt-Winters method, a form of exponential smoothing. It keeps a running estimate of normal monthly sales, called the level. Each month, the level moves toward the latest actual sales:",
       ],
       formula: {
         equation: "New level = Weight × Actual sales + (1 - Weight) × Previous level",
@@ -461,12 +461,12 @@ const forecastExample = {
           ["June", "120", "0.5 × 120 + 0.5 × 112", "**116**"],
         ],
       },
-      after: ["The latest level is the forecast. Every coming month is forecast at **116**."],
+      after: ["Without a trend or yearly pattern, the latest level is the forecast. Every coming month would be forecast at **116**."],
     },
     {
       title: "Add a trend when sales are rising or falling",
       text: [
-        "The app also tries a version that tracks the trend, the average monthly change in sales. It keeps the trend up to date in the same way as the level, and fades it gradually so that it does not run on forever. The fade is a damping factor between 0 and 1.",
+        "The method also tracks the trend, the average monthly change in sales. It keeps the trend up to date in the same way as the level, and fades it gradually so that it does not run on forever. The fade is a damping factor between 0 and 1.",
       ],
       formula: {
         equation: "Forecast (h months ahead) = Level + Trend × (Damping + Damping^2 + ... + Damping^h)",
@@ -487,42 +487,37 @@ const forecastExample = {
           ["3", "116 + 4 × (0.8 + 0.64 + 0.512)", "**123.8**"],
         ],
       },
-      after: ["The app fits the version with a trend and the version without one, and keeps the one that fits the history better."],
     },
     {
-      title: "Adjust for the yearly pattern",
+      title: "Add the yearly pattern",
       text: [
-        "Many businesses have a yearly pattern, such as a busy December. The app separates this pattern from the underlying trend using STL (Seasonal and Trend decomposition using Loess). It then forecasts the underlying trend and applies the pattern back to each month.",
-        "Each month gets a seasonal factor. A factor of 1.30 means that month is usually 30% above the underlying trend. For example, if the forecast before the yearly pattern is 120 for each month:",
+        "Many businesses have a yearly pattern, such as a busy December. With 24 months of history or more, the method learns this pattern as well. Each calendar month gets a yearly adjustment, the amount that month usually sits above or below the typical level. The adjustment is added to the forecast.",
+        "For example, if the forecast before the yearly pattern is 120 for each month:",
       ],
       table: {
-        head: ["Month", "Forecast before the yearly pattern", "Seasonal factor", "Forecast"],
+        head: ["Month", "Forecast before the yearly pattern", "Yearly adjustment", "Forecast"],
         align: ["left", "right", "right", "right"],
         rows: [
-          ["November", "120", "0.90", "120 × 0.90 = **108**"],
-          ["December", "120", "1.30", "120 × 1.30 = **156**"],
-          ["January", "120", "0.80", "120 × 0.80 = **96**"],
+          ["November", "120", "-12", "120 - 12 = **108**"],
+          ["December", "120", "+36", "120 + 36 = **156**"],
+          ["January", "120", "-24", "120 - 24 = **96**"],
         ],
       },
-      after: ["Learning a yearly pattern needs about 30 months of history, two years to learn from and some months to test on."],
-    },
-    {
-      title: "Show a likely range",
-      text: ["Each forecast month comes with a low and a high estimate that form a 95% likely range. For example, a forecast of 116 might come with a low estimate of 104 and a high estimate of 128."],
+      after: ["With fewer than 24 months of history there is too little to learn a yearly pattern from, so it is left out."],
     },
     {
       title: "Test the forecast on past months",
       text: [
-        "To measure accuracy, the app hides the latest months, forecasts them from the earlier history and compares each forecast with the actual sales. This example tests three months.",
+        "To measure accuracy, the app hides the latest months, forecasts them from the earlier history and compares each forecast with the actual sales. The test is repeated from up to 12 starting points in the history and the results are combined. This example tests three months.",
       ],
       table: {
-        head: ["Month", "Forecast", "Actual", "Error (forecast - actual)", "Absolute error", "Percentage error"],
-        align: ["left", "right", "right", "right", "right", "left"],
+        head: ["Month", "Forecast", "Actual", "Error (forecast - actual)", "Absolute error"],
+        align: ["left", "right", "right", "right", "right"],
         rows: [
-          ["January", "110", "100", "+10", "10", "10 / 100 = 10.0%"],
-          ["February", "120", "130", "-10", "10", "10 / 130 = 7.7%"],
-          ["March", "130", "170", "-40", "40", "40 / 170 = 23.5%"],
-          ["**Total**", "", "**400**", "**-40**", "**60**", ""],
+          ["January", "110", "100", "+10", "10"],
+          ["February", "120", "130", "-10", "10"],
+          ["March", "130", "170", "-40", "40"],
+          ["**Total**", "", "**400**", "**-40**", "**60**"],
         ],
       },
     },
@@ -532,22 +527,16 @@ const forecastExample = {
         head: ["Measure", "Formula", "Calculation", "Result"],
         align: ["left", "left", "left", "right"],
         rows: [
-          ["Weighted absolute percentage error", "Total absolute error / Total actual sales", "60 / 400", "**15.0%**"],
-          ["Forecast accuracy", "100% - Weighted absolute percentage error", "100% - 15.0%", "**85.0%**"],
-          ["Mean absolute percentage error", "Average of the percentage errors", "(10.0% + 7.7% + 23.5%) / 3", "**13.7%**"],
-          ["Mean absolute error", "Average of the absolute errors", "(10 + 10 + 40) / 3", "**20**"],
-          ["Root mean squared error", "SQRT( Average of the squared errors )", "SQRT(1,800 / 3) = SQRT(600)", "**24.5**"],
+          ["Forecast error", "Total absolute error / Total actual sales", "60 / 400", "**15.0%**"],
+          ["Forecast accuracy", "100% - Forecast error", "100% - 15.0%", "**85.0%**"],
           ["Bias", "Total error / Total actual sales", "-40 / 400", "**-10.0%**"],
         ],
       },
-      after: [
-        "For the root mean squared error, each error is squared first: 10 × 10 = 100, 10 × 10 = 100 and 40 × 40 = 1,600, which add up to 1,800.",
-        "Bias is negative, so the forecast ran low. A positive bias means the forecast ran high.",
-      ],
+      after: ["Bias is negative, so the forecast ran low. A positive bias means the forecast ran high."],
     },
     {
-      title: "Compare with the benchmark",
-      text: ["The benchmark forecast repeats the sales of the same month last year."],
+      title: "Compare with last year",
+      text: ["The comparison forecast repeats the sales of the same month last year."],
       table: {
         head: ["Month", "Same month last year", "Actual", "Absolute error"],
         align: ["left", "right", "right", "right"],
@@ -558,12 +547,13 @@ const forecastExample = {
           ["**Total**", "", "**400**", "**100**"],
         ],
       },
-      after: ["Benchmark error = 100 / 400 = **25.0%**. The forecast error of 15.0% is lower, so the forecast beats repeating last year."],
+      after: ["Error of repeating last year = 100 / 400 = **25.0%**. The forecast error of 15.0% is lower, so the forecast beats repeating last year."],
     },
     {
-      title: "Choose the method",
+      title: "Show a likely range",
       text: [
-        "The test is repeated from up to 12 starting points in the history, and the results are combined. It is run for exponential smoothing and for exponential smoothing with the yearly adjustment. The version with the yearly adjustment is used only when its error is at least 15% lower than the version without it. Otherwise the simpler version is used.",
+        "Each forecast month comes with a low and a high estimate that form an 80% likely range. Real sales are expected to fall inside it about 8 times out of 10. The width comes from the errors seen in the test: the larger the past errors, the wider the range. For example, a forecast of 116 might come with a low estimate of 104 and a high estimate of 128.",
+        "The test covers up to 12 months ahead. For a longer forecast, the range keeps widening and a note is shown, because the later months were not tested.",
       ],
     },
   ],

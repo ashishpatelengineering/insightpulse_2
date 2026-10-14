@@ -217,6 +217,15 @@ def test_seasonal_pattern_found_when_it_exists(frames):
     assert by_month["2026-12"] > 1.3 * by_month["2027-03"]
 
 
+def test_forecast_uses_a_single_method_and_warns_beyond_tested_horizon(frames):
+    spec = SAMPLES["online-electronics"]
+    result = forecast.run(frames["online-electronics"], forecast_params(spec["cols"], periods=24))
+    assert result["model"]["name"] == "Exponential smoothing with trend and yearly pattern"
+    assert any("tested up to 12 months" in w for w in result["warnings"])
+    short = forecast.run(frames["online-electronics"], forecast_params(spec["cols"], periods=6))
+    assert not any("tested up to" in w for w in short["warnings"])
+
+
 @pytest.mark.parametrize("sid", SAMPLE_IDS)
 @pytest.mark.parametrize("periods", [1, 6, 12])
 def test_forecast_error_measures_match_the_backtest_table(frames, sid, periods):
@@ -232,11 +241,8 @@ def test_forecast_error_measures_match_the_backtest_table(frames, sid, periods):
     total = np.abs(actual).sum()
     assert acc["wape_pct"] == pytest.approx(100 * np.abs(error).sum() / total, abs=0.1)
     assert acc["accuracy_pct"] == pytest.approx(100 - acc["wape_pct"], abs=0.1)
-    assert acc["mape_pct"] == pytest.approx(100 * np.mean(np.abs(error / actual)), abs=0.1)
-    assert acc["mae"] == pytest.approx(np.abs(error).mean(), abs=0.05)
-    assert acc["rmse"] == pytest.approx(np.sqrt((error ** 2).mean()), abs=0.05)
+    assert set(acc) == {"accuracy_pct", "wape_pct", "bias_pct", "benchmark_wape_pct", "months_tested", "folds", "horizon"}
     assert acc["bias_pct"] == pytest.approx(100 * error.sum() / total, abs=0.1)
-    assert acc["rmse"] >= acc["mae"]
     assert acc["benchmark_wape_pct"] > 0
 
 

@@ -120,31 +120,10 @@ export default function ForecastResults({ data }) {
               <tbody>
                 <tr>
                   <td>
-                    Weighted absolute percentage error
-                    <Tip text={TERMS.wape.meaning} label="About Weighted absolute percentage error" />
+                    Forecast error
+                    <Tip text={TERMS.wape.meaning} label="About Forecast error" />
                   </td>
                   <td className="num">{accuracy.wape_pct.toFixed(1)}%</td>
-                </tr>
-                <tr>
-                  <td>
-                    Mean absolute percentage error
-                    <Tip text={TERMS.mape.meaning} label="About Mean absolute percentage error" />
-                  </td>
-                  <td className="num">{accuracy.mape_pct === null ? "n/a" : `${accuracy.mape_pct.toFixed(1)}%`}</td>
-                </tr>
-                <tr>
-                  <td>
-                    Mean absolute error
-                    <Tip text={TERMS.mae.meaning} label="About Mean absolute error" />
-                  </td>
-                  <td className="num">{formatNumber(accuracy.mae)}</td>
-                </tr>
-                <tr>
-                  <td>
-                    Root mean squared error
-                    <Tip text={TERMS.rmse.meaning} label="About Root mean squared error" />
-                  </td>
-                  <td className="num">{formatNumber(accuracy.rmse)}</td>
                 </tr>
                 <tr>
                   <td>
@@ -155,8 +134,8 @@ export default function ForecastResults({ data }) {
                 </tr>
                 <tr>
                   <td>
-                    Benchmark error (same month last year)
-                    <Tip text={TERMS.benchmark.meaning} label="About Benchmark error" />
+                    Comparison with last year
+                    <Tip text={TERMS.benchmark.meaning} label="About Comparison with last year" />
                   </td>
                   <td className="num">{accuracy.benchmark_wape_pct.toFixed(1)}%</td>
                 </tr>

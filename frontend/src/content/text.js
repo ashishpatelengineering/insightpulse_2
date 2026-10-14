@@ -65,55 +65,35 @@ export const TERMS = {
     full: "Strength of the link",
     meaning: "How many times more often the two products are bought together than by chance. A lift above 1 shows a real link.",
   },
-  ets: {
-    term: "ETS",
-    full: "Error, Trend, Seasonal",
-    meaning: "Exponential smoothing, a method that gives the most weight to the latest months.",
-  },
-  stl: {
-    term: "STL",
-    full: "Seasonal and Trend decomposition using Loess",
-    meaning: "Separates the yearly seasonal pattern from the underlying trend.",
+  holtWinters: {
+    term: "Holt-Winters",
+    full: "Exponential smoothing with trend and yearly pattern",
+    meaning: "A forecasting method that gives the most weight to the latest months, follows their direction and repeats the yearly pattern.",
   },
   wape: {
-    term: "WAPE",
-    full: "Weighted Absolute Percentage Error",
-    meaning: "Total forecast error as a share of total sales.",
-  },
-  mape: {
-    term: "MAPE",
-    full: "Mean Absolute Percentage Error",
-    meaning: "The average of each month's error as a share of that month's sales.",
-  },
-  mae: {
-    term: "MAE",
-    full: "Mean Absolute Error",
-    meaning: "The average error per month, in sales units.",
-  },
-  rmse: {
-    term: "RMSE",
-    full: "Root Mean Squared Error",
-    meaning: "Like MAE, with larger errors weighted more.",
+    term: "Forecast error",
+    full: "Weighted absolute percentage error (WAPE)",
+    meaning: "Total forecast error as a share of total sales, measured on past months. Lower is better.",
   },
   bias: {
     term: "Bias",
     full: "Average direction of the error",
-    meaning: "Positive means the forecast ran high. Negative means it ran low.",
+    meaning: "Positive means the forecast ran high. Negative means it ran low. Close to zero is best.",
   },
   benchmark: {
-    term: "Benchmark",
-    full: "Same month last year",
-    meaning: "The error of repeating last year's sales for the same month.",
+    term: "Comparison with last year",
+    full: "Error of repeating the same month of last year",
+    meaning: "The forecast error if each month were simply predicted to equal the same month of last year. The forecast error should be lower than this.",
   },
   forecastAccuracy: {
     term: "Forecast accuracy",
     full: "Forecast accuracy",
-    meaning: "100% minus the weighted absolute percentage error, measured on past data.",
+    meaning: "100% minus the forecast error, measured on past months. A higher value is better.",
   },
   likelyRange: {
     term: "Likely range",
     full: "Likely range",
-    meaning: "Low and high estimates around each forecast month.",
+    meaning: "Low and high estimates around each forecast month. Real sales are expected to fall inside the range about 8 times out of 10. The width is based on the errors seen when the method was tested on past months.",
   },
 };
 
@@ -128,13 +108,13 @@ export const BLOCK_TEXT = {
 
 /** The forecasting method, in one place. Used by the Help page and the tooltip on the forecast chart. */
 export const FORECAST_METHOD =
-  "The forecast is based on past sales, with the most weight on recent months. It follows their direction without assuming sales will keep rising or falling forever. With about 30 months of history or more, the app also checks whether a yearly pattern, such as a busy December, would have predicted past months better. It uses the pattern only when it clearly does.";
+  "The forecast uses the Holt-Winters method. It gives the most weight to recent months and follows their direction without assuming sales will keep rising or falling forever. With 24 months of history or more, it also repeats the yearly pattern, such as a busy December.";
 
 export const TERM_GROUPS = {
   clv: ["rfm"],
   recommendation: ["match", "hitRate"],
   basket: ["support", "confidence", "lift"],
-  forecast: ["ets", "stl", "wape", "mape", "mae", "rmse", "bias", "benchmark"],
+  forecast: ["holtWinters", "forecastAccuracy", "wape", "bias", "benchmark", "likelyRange"],
 };
 
 /** Customer Lifetime Value: how scores are explained and how groups are assigned. */

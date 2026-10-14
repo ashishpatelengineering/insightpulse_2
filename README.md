@@ -23,16 +23,15 @@ The Help page has a step by step worked example for each analysis, a scoring and
 
 **Market Basket Analysis.** Exact pair counting on a sparse basket matrix. A basket is one order. Pairs are shown with support, confidence in both directions and lift (minimum 1.1).
 
-**Forecasting.** Sales are totaled by month. Two models are compared: exponential smoothing (ETS, Error, Trend, Seasonal), fitted with and without a damped trend and keeping the better fit, and the same model applied after removing the yearly seasonal pattern with STL (Seasonal and Trend decomposition using Loess). The seasonal model needs at least 30 months of history and is used only when it clearly lowers the error. The likely range is a 95% interval and never goes below zero.
+**Forecasting.** Sales are totaled by month and forecast with one method, Holt-Winters exponential smoothing: additive error, a damped trend and, with at least 24 months of history, an additive yearly pattern. The weights are fitted automatically. With fewer than 24 months the same method runs without the yearly pattern. Unusual data falls back to a simpler version of the method, and a forecast that is clearly unreasonable is rejected.
 
-Accuracy comes from a rolling origin back test: from up to 12 starting points in the history, the following months are hidden, forecast and compared with actual sales. Reported measures:
+Accuracy comes from a rolling origin back test: from up to 12 starting points in the history, the following months (up to 12) are hidden, forecast and compared with actual sales. Reported measures:
 
-- Weighted absolute percentage error (WAPE). Forecast accuracy is 100% minus WAPE.
-- Mean absolute percentage error (MAPE)
-- Mean absolute error (MAE)
-- Root mean squared error (RMSE)
-- Bias
-- Benchmark error: repeating the same month of last year
+- Forecast error: weighted absolute percentage error (WAPE). Forecast accuracy is 100% minus WAPE.
+- Bias: total error as a share of total sales
+- Comparison with last year: the error of repeating the same month of last year
+
+The likely range is an 80% range. Its width is sized from the errors seen in the back test (the range produced by the model alone was found to be too narrow), grows with the distance ahead, and never goes below zero. Forecasts longer than the 12 months tested show a note. Without enough history for a back test, the model's own range is widened by a fixed factor.
 
 ## Sample data
 

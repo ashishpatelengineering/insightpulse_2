@@ -3,7 +3,7 @@ import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip,
 import { compactNumber, formatMonth, formatNumber } from "../lib/format.js";
 import { Block, DataTable, KpiCard, KpiRow, Notes } from "../components/ui.jsx";
 import Tip from "../components/Tip.jsx";
-import { TERMS } from "../content/text.js";
+import { FORECAST_METHOD, TERMS } from "../content/text.js";
 
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
@@ -26,7 +26,7 @@ function ChartTooltip({ active, payload, label }) {
 }
 
 export default function ForecastResults({ data }) {
-  const { kpis, model, comparison, accuracy, history, forecast, warnings, selection } = data;
+  const { kpis, comparison, accuracy, history, forecast, warnings, selection } = data;
 
   const chartData = useMemo(() => {
     const rows = history.map((h) => ({ month: h.month, history: h.value }));
@@ -82,7 +82,7 @@ export default function ForecastResults({ data }) {
         <KpiCard label="History used" value={`${kpis.history_months} months`} sub={`${formatMonth(kpis.history_start)} to ${formatMonth(kpis.history_end)}`} />
       </KpiRow>
 
-      <Block title="Sales history and forecast">
+      <Block title="Sales history and forecast" tip={FORECAST_METHOD}>
         <div className="chart" style={{ height: 360 }}>
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={chartData} margin={{ top: 10, right: 16, left: 0, bottom: 4 }}>
@@ -108,7 +108,7 @@ export default function ForecastResults({ data }) {
       </Block>
 
       {accuracy && (
-        <Block title="Forecast accuracy" subtitle={model.name}>
+        <Block title="Forecast accuracy">
           <div className="table-scroll">
             <table className="table measures">
               <thead>

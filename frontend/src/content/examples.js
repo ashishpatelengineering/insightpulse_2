@@ -64,6 +64,12 @@ function rankTable(rows, rankKey, valueKey, scoreKey, formatValue, n) {
     .map((c) => [c.name, formatValue(c[valueKey]), String(c[rankKey]), `(${c[rankKey]} / ${n}) × 5 = ${((c[rankKey] * 5) / n).toFixed(1)}`, `**${c[scoreKey]}**`]);
 }
 
+/** "Emily", "Emily and James", "Michael, Jennifer and Robert". */
+function joinNames(members) {
+  const names = members.map((c) => c.name);
+  return names.length <= 1 ? names.join("") : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}
+
 function buildClvExample() {
   const rows = clvScores();
   const n = rows.length;
@@ -75,9 +81,6 @@ function buildClvExample() {
     const revenue = members.reduce((s, c) => s + c.spend, 0);
     return { g, members, revenue, share: (100 * revenue) / totalRevenue };
   });
-  const champions = groupRows.find((x) => x.g === "Champions");
-  const atRisk = groupRows.find((x) => x.g === "At Risk");
-  const atRiskCustomer = atRisk.members[0];
 
   return {
     lead: `An online coffee bean shop has ${n} customers. The file has one row per purchase. Adding up each customer's rows gives this table. Days are counted from the customer's last purchase to the end of the file.`,
@@ -164,13 +167,25 @@ function buildClvExample() {
       {
         title: "Revenue by group",
         table: {
-          head: ["Group", "Customers", "Revenue", "Calculation", "Share of revenue"],
-          align: ["left", "right", "right", "left", "right"],
-          rows: groupRows.map((x) => [x.g, String(x.members.length), money(x.revenue), `${x.revenue.toLocaleString("en-US")} / ${totalRevenue.toLocaleString("en-US")}`, `**${x.share.toFixed(1)}%**`]),
+          head: ["Group", "Customers", "Number", "Share of customers", "Revenue", "Calculation", "Share of revenue"],
+          align: ["left", "left", "right", "right", "right", "left", "right"],
+          rows: groupRows.map((x) => [
+            x.g,
+            x.members.map((c) => c.name).join(", "),
+            String(x.members.length),
+            `${Math.round((100 * x.members.length) / n)}%`,
+            money(x.revenue),
+            `${x.revenue.toLocaleString("en-US")}\u00a0/\u00a0${totalRevenue.toLocaleString("en-US")}`,
+            `**${x.share.toFixed(1)}%**`,
+          ]),
         },
-        after: [
-          `${champions.members.length} of ${n} customers (${Math.round((100 * champions.members.length) / n)}%), the Champions, bring in ${champions.share.toFixed(1)}% of revenue. ${atRiskCustomer.name} is At Risk, accounts for ${atRisk.share.toFixed(1)}% of revenue and last bought ${atRiskCustomer.days} days ago, so ${atRiskCustomer.name} is the first customer to contact.`,
-        ],
+        after: groupRows.map((x) => {
+          const verb = x.members.length === 1 ? "brings" : "bring";
+          const sentence = `**${x.g}:** ${joinNames(x.members)} ${verb} in ${x.share.toFixed(1)}% of revenue.`;
+          if (x.g !== "At Risk") return sentence;
+          const first = x.members[0];
+          return `${sentence} ${first.name} last bought ${first.days} days ago, so ${first.name} is the first customer to contact.`;
+        }),
       },
       {
         title: "Use the groups",
@@ -489,7 +504,7 @@ const forecastExample = {
           ["January", "120", "0.80", "120 × 0.80 = **96**"],
         ],
       },
-      after: ["Learning a yearly pattern needs at least two years of history."],
+      after: ["Learning a yearly pattern needs about 30 months of history, two years to learn from and some months to test on."],
     },
     {
       title: "Show a likely range",
@@ -514,18 +529,21 @@ const forecastExample = {
     {
       title: "Calculate the error measures",
       table: {
-        head: ["Measure", "Calculation", "Result"],
-        align: ["left", "left", "right"],
+        head: ["Measure", "Formula", "Calculation", "Result"],
+        align: ["left", "left", "left", "right"],
         rows: [
-          ["Weighted absolute percentage error", "Total absolute error / total actual sales = 60 / 400", "**15.0%**"],
-          ["Forecast accuracy", "100% - 15.0%", "**85.0%**"],
-          ["Mean absolute percentage error", "(10.0% + 7.7% + 23.5%) / 3", "**13.7%**"],
-          ["Mean absolute error", "(10 + 10 + 40) / 3", "**20**"],
-          ["Root mean squared error", "Squared errors: 100, 100, 1,600. Average: 1,800 / 3 = 600. Square root of 600", "**24.5**"],
-          ["Bias", "Total error / total actual sales = -40 / 400", "**-10.0%**"],
+          ["Weighted absolute percentage error", "Total absolute error / Total actual sales", "60 / 400", "**15.0%**"],
+          ["Forecast accuracy", "100% - Weighted absolute percentage error", "100% - 15.0%", "**85.0%**"],
+          ["Mean absolute percentage error", "Average of the percentage errors", "(10.0% + 7.7% + 23.5%) / 3", "**13.7%**"],
+          ["Mean absolute error", "Average of the absolute errors", "(10 + 10 + 40) / 3", "**20**"],
+          ["Root mean squared error", "SQRT( Average of the squared errors )", "SQRT(1,800 / 3) = SQRT(600)", "**24.5**"],
+          ["Bias", "Total error / Total actual sales", "-40 / 400", "**-10.0%**"],
         ],
       },
-      after: ["Bias is negative, so the forecast ran low. A positive bias means the forecast ran high."],
+      after: [
+        "For the root mean squared error, each error is squared first: 10 × 10 = 100, 10 × 10 = 100 and 40 × 40 = 1,600, which add up to 1,800.",
+        "Bias is negative, so the forecast ran low. A positive bias means the forecast ran high.",
+      ],
     },
     {
       title: "Compare with the benchmark",
@@ -545,7 +563,7 @@ const forecastExample = {
     {
       title: "Choose the method",
       text: [
-        "The test is repeated from up to 12 starting points in the history, and the results are combined. It is run for exponential smoothing and for exponential smoothing with the yearly adjustment. The method with the lower error is used for your forecast.",
+        "The test is repeated from up to 12 starting points in the history, and the results are combined. It is run for exponential smoothing and for exponential smoothing with the yearly adjustment. The version with the yearly adjustment is used only when its error is at least 15% lower than the version without it. Otherwise the simpler version is used.",
       ],
     },
   ],

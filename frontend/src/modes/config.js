@@ -3,6 +3,8 @@
  * and the inputs the user must fill in. The sidebar, popovers and Inputs form are built from this.
  */
 
+import { FORECAST_METHOD } from "../content/text.js";
+
 export const ALL_VALUE = "__ALL__";
 export const NONE_VALUE = "__NONE__";
 
@@ -74,6 +76,7 @@ export const MODES = [
       bullets: [
         "Predicts sales for the coming months from your sales history.",
         "Forecast one group, such as a category or region, or all sales.",
+        FORECAST_METHOD,
       ],
     },
     fields: [

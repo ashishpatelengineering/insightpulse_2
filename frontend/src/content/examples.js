@@ -61,7 +61,7 @@ function rankTable(rows, rankKey, valueKey, scoreKey, formatValue, n) {
   return rows
     .slice()
     .sort((a, b) => a[rankKey] - b[rankKey])
-    .map((c) => [c.name, formatValue(c[valueKey]), String(c[rankKey]), `${c[rankKey]} ÷ ${n} × 5 = ${((c[rankKey] * 5) / n).toFixed(1)}`, `**${c[scoreKey]}**`]);
+    .map((c) => [c.name, formatValue(c[valueKey]), String(c[rankKey]), `(${c[rankKey]} / ${n}) × 5 = ${((c[rankKey] * 5) / n).toFixed(1)}`, `**${c[scoreKey]}**`]);
 }
 
 function buildClvExample() {
@@ -92,8 +92,15 @@ function buildClvExample() {
         text: [
           "The three measures are Recency (R), the days since the last purchase, Frequency (F), the number of orders, and Monetary value (M), the total spend. Together they are known as RFM.",
           `For each measure, customers are ranked from weakest to strongest. Rank 1 is the weakest customer and rank ${n} is the strongest. The rank becomes a score from 1 to 5:`,
-          `**Score = rank ÷ ${n} customers × 5, rounded up to a whole number**`,
         ],
+        formula: {
+          equation: "Score = ROUNDUP( (Rank / Customers) × 5 )",
+          where: [
+            ["Rank", `position from weakest (1) to strongest (${n})`],
+            ["Customers", `number of customers in the file (${n})`],
+            ["ROUNDUP", "round up to a whole number"],
+          ],
+        },
       },
       {
         title: "Recency rank and score",
@@ -128,7 +135,7 @@ function buildClvExample() {
         table: {
           head: ["Customer", "R score", "F score", "M score", "F and M average"],
           align: ["left", "right", "right", "right", "left"],
-          rows: rows.map((c) => [c.name, String(c.r), String(c.f), String(c.m), `(${c.f} + ${c.m}) ÷ 2 = **${c.fm.toFixed(1)}**`]),
+          rows: rows.map((c) => [c.name, String(c.r), String(c.f), String(c.m), `(${c.f} + ${c.m}) / 2 = **${c.fm.toFixed(1)}**`]),
         },
       },
       {
@@ -144,12 +151,12 @@ function buildClvExample() {
       {
         title: "Headline numbers",
         table: {
-          head: ["Measure", "Calculation", "Result"],
-          align: ["left", "left", "right"],
+          head: ["Measure", "Formula", "Calculation", "Result"],
+          align: ["left", "left", "left", "right"],
           rows: [
-            ["Total revenue", rows.map((c) => c.spend.toLocaleString("en-US")).join(" + "), `**${money(totalRevenue)}**`],
-            ["Average lifetime value", `${money(totalRevenue)} ÷ ${n} customers`, `**${money(totalRevenue / n)}**`],
-            ["Average order value", `${money(totalRevenue)} ÷ ${totalOrders} orders`, `**${money(Math.round(totalRevenue / totalOrders))}**`],
+            ["Total revenue", "Sum of total spend", "Add up the Total spend column", `**${money(totalRevenue)}**`],
+            ["Average lifetime value", "Total revenue / Customers", `${totalRevenue.toLocaleString("en-US")} / ${n}`, `**${money(totalRevenue / n)}**`],
+            ["Average order value", "Total revenue / Orders", `${totalRevenue.toLocaleString("en-US")} / ${totalOrders}`, `**${money(Math.round(totalRevenue / totalOrders))}**`],
           ],
         },
         after: ["Average lifetime value is the average amount a customer has spent so far. Average order value is the average value of one order."],
@@ -159,7 +166,7 @@ function buildClvExample() {
         table: {
           head: ["Group", "Customers", "Revenue", "Calculation", "Share of revenue"],
           align: ["left", "right", "right", "left", "right"],
-          rows: groupRows.map((x) => [x.g, String(x.members.length), money(x.revenue), `${x.revenue.toLocaleString("en-US")} ÷ ${totalRevenue.toLocaleString("en-US")}`, `**${x.share.toFixed(1)}%**`]),
+          rows: groupRows.map((x) => [x.g, String(x.members.length), money(x.revenue), `${x.revenue.toLocaleString("en-US")} / ${totalRevenue.toLocaleString("en-US")}`, `**${x.share.toFixed(1)}%**`]),
         },
         after: [
           `${champions.members.length} of ${n} customers (${Math.round((100 * champions.members.length) / n)}%), the Champions, bring in ${champions.share.toFixed(1)}% of revenue. ${atRiskCustomer.name} is At Risk, accounts for ${atRisk.share.toFixed(1)}% of revenue and last bought ${atRiskCustomer.days} days ago, so ${atRiskCustomer.name} is the first customer to contact.`,
@@ -220,19 +227,26 @@ const recommendationExample = {
       title: "Score how similar two products are",
       text: [
         "Two products are similar when the same customers buy both. The score is:",
-        "**Similarity = customers who bought both ÷ √(buyers of the first product × buyers of the second product)**",
-        "A new customer, Grace, has bought Bread and Jam. The table scores each product she has not bought against Bread and Jam.",
       ],
+      formula: {
+        equation: "Similarity = Both / SQRT( First × Second )",
+        where: [
+          ["Both", "number of customers who bought both products"],
+          ["First, Second", "number of buyers of each product"],
+          ["SQRT", "square root"],
+        ],
+      },
+      afterFormula: ["A new customer, Grace, has bought Bread and Jam. The table scores each product she has not bought against Bread and Jam."],
       table: {
         head: ["Pair", "Customers who bought both", "Calculation", "Similarity"],
         align: ["left", "left", "left", "right"],
         rows: [
-          ["Butter and Bread", "Emma, Noah, Olivia, Mason, Sophia (5)", "5 ÷ √(5 × 6) = 5 ÷ 5.48", "**0.91**"],
-          ["Butter and Jam", "Emma, Noah, Sophia (3)", "3 ÷ √(5 × 4) = 3 ÷ 4.47", "**0.67**"],
-          ["Coffee and Bread", "Liam, Mason (2)", "2 ÷ √(3 × 6) = 2 ÷ 4.24", "**0.47**"],
-          ["Coffee and Jam", "Ava (1)", "1 ÷ √(3 × 4) = 1 ÷ 3.46", "**0.29**"],
-          ["Milk and Bread", "Olivia, Liam (2)", "2 ÷ √(3 × 6) = 2 ÷ 4.24", "**0.47**"],
-          ["Milk and Jam", "Ava (1)", "1 ÷ √(3 × 4) = 1 ÷ 3.46", "**0.29**"],
+          ["Butter and Bread", "Emma, Noah, Olivia, Mason, Sophia (5)", "5 / SQRT(5 × 6) = 5 / 5.48", "**0.91**"],
+          ["Butter and Jam", "Emma, Noah, Sophia (3)", "3 / SQRT(5 × 4) = 3 / 4.47", "**0.67**"],
+          ["Coffee and Bread", "Liam, Mason (2)", "2 / SQRT(3 × 6) = 2 / 4.24", "**0.47**"],
+          ["Coffee and Jam", "Ava (1)", "1 / SQRT(3 × 4) = 1 / 3.46", "**0.29**"],
+          ["Milk and Bread", "Olivia, Liam (2)", "2 / SQRT(3 × 6) = 2 / 4.24", "**0.47**"],
+          ["Milk and Jam", "Ava (1)", "1 / SQRT(3 × 4) = 1 / 3.46", "**0.29**"],
         ],
       },
     },
@@ -243,9 +257,9 @@ const recommendationExample = {
         head: ["Product", "Calculation", "Score", "Match"],
         align: ["left", "left", "right", "right"],
         rows: [
-          ["Butter", "(0.91 + 0.67) ÷ 2", "0.79", "**79**"],
-          ["Coffee", "(0.47 + 0.29) ÷ 2", "0.38", "**38**"],
-          ["Milk", "(0.47 + 0.29) ÷ 2", "0.38", "**38**"],
+          ["Butter", "(0.91 + 0.67) / 2", "0.79", "**79**"],
+          ["Coffee", "(0.47 + 0.29) / 2", "0.38", "**38**"],
+          ["Milk", "(0.47 + 0.29) / 2", "0.38", "**38**"],
         ],
       },
       after: ["Grace's top suggestion is Butter. Products a customer already bought are left out of the list."],
@@ -260,9 +274,9 @@ const recommendationExample = {
         head: ["Product", "Similarity to Bread", "Similarity to Butter", "Score"],
         align: ["left", "left", "left", "right"],
         rows: [
-          ["Jam", "2 ÷ √(6 × 3) = 0.47", "2 ÷ √(5 × 3) = 0.52", "**0.49**"],
-          ["Coffee", "2 ÷ √(6 × 3) = 0.47", "1 ÷ √(5 × 3) = 0.26", "0.36"],
-          ["Milk", "2 ÷ √(6 × 3) = 0.47", "1 ÷ √(5 × 3) = 0.26", "0.36"],
+          ["Jam", "2 / SQRT(6 × 3) = 0.47", "2 / SQRT(5 × 3) = 0.52", "**0.49**"],
+          ["Coffee", "2 / SQRT(6 × 3) = 0.47", "1 / SQRT(5 × 3) = 0.26", "0.36"],
+          ["Milk", "2 / SQRT(6 × 3) = 0.47", "1 / SQRT(5 × 3) = 0.26", "0.36"],
         ],
       },
       after: ["Jam has the highest score. The hidden product was found, so this test is a **hit**."],
@@ -274,20 +288,27 @@ const recommendationExample = {
         head: ["Product", "Similarity to Bread", "Similarity to Milk", "Score"],
         align: ["left", "left", "left", "right"],
         rows: [
-          ["Coffee", "2 ÷ √(6 × 3) = 0.47", "2 ÷ √(3 × 3) = 0.67", "**0.57**"],
-          ["Jam", "3 ÷ √(6 × 4) = 0.61", "1 ÷ √(4 × 3) = 0.29", "0.45"],
-          ["Butter", "4 ÷ √(6 × 4) = 0.82", "0 ÷ √(4 × 3) = 0.00", "0.41"],
+          ["Coffee", "2 / SQRT(6 × 3) = 0.47", "2 / SQRT(3 × 3) = 0.67", "**0.57**"],
+          ["Jam", "3 / SQRT(6 × 4) = 0.61", "1 / SQRT(4 × 3) = 0.29", "0.45"],
+          ["Butter", "4 / SQRT(6 × 4) = 0.82", "0 / SQRT(4 × 3) = 0.00", "0.41"],
         ],
       },
       after: ["Coffee has the highest score and the hidden Butter ranks third, so this test is a **miss**."],
     },
     {
       title: "Hit rate",
-      text: ["**Hit rate = tests that found the hidden product ÷ tests run**"],
+      text: ["Hit rate is the share of tests that found the hidden product."],
+      formula: {
+        equation: "Hit rate = Hits / Tests run",
+        where: [
+          ["Hits", "tests where the hidden product was in the suggestions"],
+          ["Tests run", "number of customers tested"],
+        ],
+      },
       table: {
         head: ["Tests run", "Hits", "Calculation", "Hit rate"],
         align: ["right", "right", "left", "right"],
-        rows: [["2", "1", "1 ÷ 2", "**50%**"]],
+        rows: [["2", "1", "1 / 2", "**50%**"]],
       },
       after: [
         "The app runs this test for every eligible customer in the file. It runs the same test for the most popular products, offered to every customer.",
@@ -316,27 +337,41 @@ const basketExample = {
   steps: [
     {
       title: "Support",
-      text: ["**Support = orders containing both products ÷ all orders**"],
+      text: ["Support is the share of all orders that contain both products."],
+      formula: {
+        equation: "Support = Orders with both / All orders",
+        where: [
+          ["Orders with both", "orders containing product A and product B"],
+          ["All orders", "total number of orders (100 here)"],
+        ],
+      },
       table: {
         head: ["Pair", "Calculation", "Support"],
         align: ["left", "left", "right"],
         rows: [
-          ["Coffee and Blueberry Muffin", "10 ÷ 100", "**10%**"],
-          ["Coffee and Bottled Water", "8 ÷ 100", "**8%**"],
+          ["Coffee and Blueberry Muffin", "10 / 100", "**10%**"],
+          ["Coffee and Bottled Water", "8 / 100", "**8%**"],
         ],
       },
     },
     {
       title: "Confidence",
-      text: ["**Confidence (A then B) = orders containing both products ÷ orders containing A**"],
+      text: ["Confidence is the share of orders containing A that also contain B."],
+      formula: {
+        equation: "Confidence (A then B) = Orders with both / Orders with A",
+        where: [
+          ["Orders with both", "orders containing product A and product B"],
+          ["Orders with A", "orders containing the first product"],
+        ],
+      },
       table: {
         head: ["Direction", "Calculation", "Confidence"],
         align: ["left", "left", "right"],
         rows: [
-          ["Coffee then Blueberry Muffin", "10 ÷ 20", "**50%**"],
-          ["Blueberry Muffin then Coffee", "10 ÷ 15", "**66.7%**"],
-          ["Coffee then Bottled Water", "8 ÷ 20", "**40%**"],
-          ["Bottled Water then Coffee", "8 ÷ 40", "**20%**"],
+          ["Coffee then Blueberry Muffin", "10 / 20", "**50%**"],
+          ["Blueberry Muffin then Coffee", "10 / 15", "**66.7%**"],
+          ["Coffee then Bottled Water", "8 / 20", "**40%**"],
+          ["Bottled Water then Coffee", "8 / 40", "**20%**"],
         ],
       },
     },
@@ -344,14 +379,20 @@ const basketExample = {
       title: "Lift",
       text: [
         "Chance alone would put two products in the same order at a rate equal to the share of orders with A multiplied by the share of orders with B. Lift compares what happens with that expected rate.",
-        "**Lift = support ÷ (share of orders with A × share of orders with B)**",
       ],
+      formula: {
+        equation: "Lift = Support / ( Share with A × Share with B )",
+        where: [
+          ["Support", "share of orders containing both products"],
+          ["Share with A, Share with B", "share of all orders containing each product"],
+        ],
+      },
       table: {
         head: ["Pair", "Expected by chance", "Support", "Lift"],
         align: ["left", "left", "right", "right"],
         rows: [
-          ["Coffee and Blueberry Muffin", "20% × 15% = 3%", "10%", "10 ÷ 3 = **3.33**"],
-          ["Coffee and Bottled Water", "20% × 40% = 8%", "8%", "8 ÷ 8 = **1.00**"],
+          ["Coffee and Blueberry Muffin", "20% × 15% = 3%", "10%", "10 / 3 = **3.33**"],
+          ["Coffee and Bottled Water", "20% × 40% = 8%", "8%", "8 / 8 = **1.00**"],
         ],
       },
     },
@@ -384,9 +425,15 @@ const forecastExample = {
       title: "Smooth the history (exponential smoothing)",
       text: [
         "Exponential smoothing keeps a running estimate of normal monthly sales, called the level. Each month, the level moves toward the latest actual sales:",
-        "**New level = weight × actual sales + (1 - weight) × previous level**",
-        "The weight is a number between 0 and 1. A higher weight makes recent months count more. The app chooses the weight that fits your history best. This example uses a weight of 0.5, and the first level is January's sales.",
       ],
+      formula: {
+        equation: "New level = Weight × Actual sales + (1 - Weight) × Previous level",
+        where: [
+          ["Weight", "a number between 0 and 1"],
+          ["Previous level", "the level after the month before"],
+        ],
+      },
+      afterFormula: ["A higher weight makes recent months count more. The app chooses the weight that fits your history best. This example uses a weight of 0.5, and the first level is January's sales."],
       table: {
         head: ["Month", "Actual sales", "Calculation", "New level"],
         align: ["left", "right", "left", "right"],
@@ -405,9 +452,17 @@ const forecastExample = {
       title: "Add a trend when sales are rising or falling",
       text: [
         "The app also tries a version that tracks the trend, the average monthly change in sales. It keeps the trend up to date in the same way as the level, and fades it gradually so that it does not run on forever. The fade is a damping factor between 0 and 1.",
-        "**Forecast for month h = level + trend × (damping + damping² + ... + damping^h)**",
-        "For example, with a level of 116, a trend of 4 per month and a damping factor of 0.8:",
       ],
+      formula: {
+        equation: "Forecast (h months ahead) = Level + Trend × (Damping + Damping^2 + ... + Damping^h)",
+        where: [
+          ["Level", "latest level of sales"],
+          ["Trend", "average monthly change in sales"],
+          ["Damping", "fade factor between 0 and 1"],
+          ["h", "number of months ahead"],
+        ],
+      },
+      afterFormula: ["For example, with a level of 116, a trend of 4 per month and a damping factor of 0.8:"],
       table: {
         head: ["Month ahead", "Calculation", "Forecast"],
         align: ["right", "left", "right"],
@@ -449,9 +504,9 @@ const forecastExample = {
         head: ["Month", "Forecast", "Actual", "Error (forecast - actual)", "Absolute error", "Percentage error"],
         align: ["left", "right", "right", "right", "right", "left"],
         rows: [
-          ["January", "110", "100", "+10", "10", "10 ÷ 100 = 10.0%"],
-          ["February", "120", "130", "-10", "10", "10 ÷ 130 = 7.7%"],
-          ["March", "130", "170", "-40", "40", "40 ÷ 170 = 23.5%"],
+          ["January", "110", "100", "+10", "10", "10 / 100 = 10.0%"],
+          ["February", "120", "130", "-10", "10", "10 / 130 = 7.7%"],
+          ["March", "130", "170", "-40", "40", "40 / 170 = 23.5%"],
           ["**Total**", "", "**400**", "**-40**", "**60**", ""],
         ],
       },
@@ -462,12 +517,12 @@ const forecastExample = {
         head: ["Measure", "Calculation", "Result"],
         align: ["left", "left", "right"],
         rows: [
-          ["Weighted absolute percentage error", "Total absolute error ÷ total actual sales = 60 ÷ 400", "**15.0%**"],
+          ["Weighted absolute percentage error", "Total absolute error / total actual sales = 60 / 400", "**15.0%**"],
           ["Forecast accuracy", "100% - 15.0%", "**85.0%**"],
-          ["Mean absolute percentage error", "(10.0% + 7.7% + 23.5%) ÷ 3", "**13.7%**"],
-          ["Mean absolute error", "(10 + 10 + 40) ÷ 3", "**20**"],
-          ["Root mean squared error", "Squared errors: 100, 100, 1,600. Average: 1,800 ÷ 3 = 600. Square root of 600", "**24.5**"],
-          ["Bias", "Total error ÷ total actual sales = -40 ÷ 400", "**-10.0%**"],
+          ["Mean absolute percentage error", "(10.0% + 7.7% + 23.5%) / 3", "**13.7%**"],
+          ["Mean absolute error", "(10 + 10 + 40) / 3", "**20**"],
+          ["Root mean squared error", "Squared errors: 100, 100, 1,600. Average: 1,800 / 3 = 600. Square root of 600", "**24.5**"],
+          ["Bias", "Total error / total actual sales = -40 / 400", "**-10.0%**"],
         ],
       },
       after: ["Bias is negative, so the forecast ran low. A positive bias means the forecast ran high."],
@@ -485,7 +540,7 @@ const forecastExample = {
           ["**Total**", "", "**400**", "**100**"],
         ],
       },
-      after: ["Benchmark error = 100 ÷ 400 = **25.0%**. The forecast error of 15.0% is lower, so the forecast beats repeating last year."],
+      after: ["Benchmark error = 100 / 400 = **25.0%**. The forecast error of 15.0% is lower, so the forecast beats repeating last year."],
     },
     {
       title: "Choose the method",

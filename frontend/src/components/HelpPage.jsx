@@ -1,8 +1,8 @@
-import { useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MODES } from "../modes/config.js";
 import { SCORE_ROWS, SEGMENTS, TERMS, TERM_GROUPS } from "../content/text.js";
 import { EXAMPLES } from "../content/examples.js";
-import { ExampleBody, ExampleButton } from "./Example.jsx";
+import { ExampleButton, ExampleModal } from "./Example.jsx";
 import GroupGrid from "./GroupGrid.jsx";
 
 const QUESTIONS = {
@@ -26,20 +26,20 @@ const QUESTIONS = {
 
 function AnalysisSection({ mode }) {
   const [open, setOpen] = useState(false);
-  const id = useId();
+  const close = useCallback(() => setOpen(false), []);
   const terms = TERM_GROUPS[mode.id].map((key) => TERMS[key]);
   return (
     <section className="card help-card" id={mode.id}>
       <div className="help-card-head">
         <h2>{mode.title}</h2>
-        <ExampleButton open={open} onToggle={() => setOpen(!open)} controls={id} />
+        <ExampleButton onOpen={() => setOpen(true)} />
       </div>
       <ul>
         {mode.info.bullets.map((text) => (
           <li key={text}>{text}</li>
         ))}
       </ul>
-      {open && <ExampleBody example={EXAMPLES[mode.id]} id={id} />}
+      {open && <ExampleModal title={mode.title} example={EXAMPLES[mode.id]} onClose={close} />}
       {mode.id === "clv" && (
         <>
           <h3>How customers are scored</h3>

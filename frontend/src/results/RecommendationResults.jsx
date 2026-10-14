@@ -3,6 +3,8 @@ import { downloadCsv } from "../lib/csv.js";
 import { formatNumber } from "../lib/format.js";
 import { DownloadIcon } from "../components/Icons.jsx";
 import { Alert, Block, KpiCard, KpiRow, Notes } from "../components/ui.jsx";
+import Tip from "../components/Tip.jsx";
+import { BLOCK_TEXT, TERMS } from "../content/text.js";
 
 
 const VERDICT_TEXT = {
@@ -22,16 +24,14 @@ function AccuracyTest({ validation }) {
   return (
     <Block
       title="Reliability of the suggestions"
+      tip={BLOCK_TEXT.reliability}
       subtitle={`Tested on ${formatNumber(validation.customers_tested)} customers.`}
     >
       <div className="kpi-row">
-        <KpiCard label="Suggestions" value={`${validation.model_hit_pct.toFixed(0)}%`} sub="hit rate" />
-        <KpiCard label="Most popular products" value={`${validation.bestseller_hit_pct.toFixed(0)}%`} sub="hit rate" />
+        <KpiCard label="Suggestions" value={`${validation.model_hit_pct.toFixed(0)}%`} sub="hit rate" tip={TERMS.hitRate.meaning} />
+        <KpiCard label="Most popular products" value={`${validation.bestseller_hit_pct.toFixed(0)}%`} sub="hit rate" tip={TERMS.hitRate.meaning} />
       </div>
       <p className={`verdict verdict-${validation.verdict}`}>{VERDICT_TEXT[validation.verdict]}</p>
-      <p className="muted small-print">
-        Share of customers whose hidden purchase appears in their top 5 suggestions, compared with the most popular products.
-      </p>
     </Block>
   );
 }
@@ -67,7 +67,6 @@ export default function RecommendationResults({ data }) {
 
       <Block
         title="Recommendations for a customer"
-        subtitle="Choose a customer to see their suggested products."
         actions={
           <button type="button" className="btn btn-ghost small" onClick={downloadAll}>
             <DownloadIcon /> Download all recommendations
@@ -127,7 +126,10 @@ export default function RecommendationResults({ data }) {
                       <th>Recommended product</th>
                       {kpis.has_category && <th>Category</th>}
                       {kpis.has_sub_category && <th>Sub category</th>}
-                      <th className="num">Match</th>
+                      <th className="num">
+                        Match
+                        <Tip text={BLOCK_TEXT.matchColumn} label="About Match" />
+                      </th>
                       <th>Why this product</th>
                     </tr>
                   </thead>
@@ -147,7 +149,6 @@ export default function RecommendationResults({ data }) {
                   </tbody>
                 </table>
               </div>
-              <p className="muted small-print">Match: similarity score from 0 to 100. Popular: a product many customers buy, shown when the customer has little history.</p>
             </div>
           </div>
         )}

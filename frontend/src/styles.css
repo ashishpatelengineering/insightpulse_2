@@ -204,6 +204,8 @@ button:disabled { cursor: not-allowed; }
 .table tbody tr:hover { background: #fafaf8; }
 .table .num { text-align: right; }
 .th-button { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 10px 14px; background: none; border: none; font-weight: 600; text-align: inherit; color: var(--ink); }
+.th-inner { display: flex; align-items: center; padding-right: 8px; }
+.th-inner .th-button { flex: 1; }
 .num .th-button { justify-content: flex-end; }
 .th-button.active { color: var(--blue); }
 .sort-mark { font-size: 10px; color: #9aa3ae; }
@@ -289,3 +291,29 @@ button:disabled { cursor: not-allowed; }
 .grid-cell { padding: 0 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
 .grid-index { color: var(--muted); font-size: 12px; text-align: right; }
 .help-card td:first-child strong { white-space: nowrap; }
+
+/* Tooltips */
+.tip-wrap { display: inline-flex; vertical-align: middle; margin-left: 4px; }
+.tip-button { border: none; background: none; padding: 3px; border-radius: 50%; color: var(--muted); display: inline-flex; cursor: help; }
+.tip-button:hover, .tip-button:focus-visible { color: var(--blue); background: var(--blue-soft); }
+.tip-popover { position: fixed; z-index: 60; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 28px rgba(16, 24, 40, 0.18); padding: 10px 12px; font-size: 13px; font-weight: 400; line-height: 1.45; color: var(--ink); text-align: left; white-space: normal; }
+.kpi-label { display: flex; align-items: center; }
+.kpi-label .tip-wrap { margin-left: 2px; }
+.segment-card header .tip-wrap { margin-left: auto; }
+.table th .tip-wrap { margin-left: 2px; }
+
+/* Help examples */
+.help-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.example-toggle { gap: 8px; }
+.chevron { transition: transform 0.15s; }
+.chevron.open { transform: rotate(180deg); }
+.example { display: flex; flex-direction: column; gap: 14px; padding: 18px; background: #fafaf8; border: 1px solid var(--line); border-radius: 10px; }
+.example p { margin: 0; line-height: 1.55; }
+.example-step { display: flex; flex-direction: column; gap: 10px; }
+.example-step h4 { display: flex; align-items: center; gap: 10px; font-size: 15px; }
+.step-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: var(--blue); color: #fff; font-size: 12.5px; font-weight: 700; flex: none; }
+.example-table { background: #fff; }
+.example-table td, .example-table th { white-space: normal; }
+.example .table-scroll { border: 1px solid var(--line); border-radius: 8px; }
+.segment-card header { min-height: 46px; }
+.segment-card .stat-list dt, .segment-card .stat-list dd { white-space: nowrap; }

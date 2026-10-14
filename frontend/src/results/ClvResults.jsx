@@ -1,6 +1,8 @@
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatDate, formatNumber } from "../lib/format.js";
 import { Block, DataTable, KpiCard, KpiRow, Notes } from "../components/ui.jsx";
+import Tip from "../components/Tip.jsx";
+import { BLOCK_TEXT, SEGMENT_TEXT, TERMS } from "../content/text.js";
 
 const SEGMENT_COLORS = {
   Champions: "#1e3a5f",
@@ -17,8 +19,8 @@ function SegmentCard({ segment }) {
       <header>
         <span className="dot" style={{ background: color }} />
         <h4>{segment.segment}</h4>
+        <Tip text={SEGMENT_TEXT[segment.segment]} label={`About ${segment.segment}`} />
       </header>
-      <p className="muted">{segment.description}</p>
       <div className="segment-main">
         <strong>{formatNumber(segment.customers)}</strong>
         <span>customers</span>
@@ -60,7 +62,7 @@ export default function ClvResults({ data }) {
     { key: "orders", label: "Orders", align: "right" },
     { key: "last_purchase", label: "Last purchase", render: (r) => formatDate(r.last_purchase), csv: (r) => r.last_purchase },
     { key: "days_since_last", label: "Days since last purchase", align: "right" },
-    { key: "rfm", label: "Score", align: "right" },
+    { key: "rfm", label: "Score", align: "right", tip: TERMS.score.meaning },
   ];
 
   return (
@@ -68,11 +70,11 @@ export default function ClvResults({ data }) {
       <KpiRow>
         <KpiCard label="Customers" value={formatNumber(kpis.customers)} sub={`${formatDate(kpis.period_start)} to ${formatDate(kpis.period_end)}`} />
         <KpiCard label="Total revenue" value={formatNumber(kpis.total_revenue)} sub={`${formatNumber(kpis.orders)} orders`} />
-        <KpiCard label="Average lifetime value" value={formatNumber(kpis.avg_spend)} sub="per customer" />
-        <KpiCard label="Average order value" value={formatNumber(kpis.avg_order_value)} sub="per order" />
+        <KpiCard label="Average lifetime value" value={formatNumber(kpis.avg_spend)} sub="per customer" tip={TERMS.avgLifetimeValue.meaning} />
+        <KpiCard label="Average order value" value={formatNumber(kpis.avg_order_value)} sub="per order" tip={TERMS.avgOrderValue.meaning} />
       </KpiRow>
 
-      <Block title="Customer segments" subtitle="Based on how recently, how often and how much customers buy.">
+      <Block title="Customer segments" tip={BLOCK_TEXT.segments}>
         <div className="segment-grid">
           {segments.map((segment) => (
             <SegmentCard key={segment.segment} segment={segment} />
@@ -80,7 +82,7 @@ export default function ClvResults({ data }) {
         </div>
       </Block>
 
-      <Block title="Who drives your revenue" subtitle="Share of customers compared with share of revenue.">
+      <Block title="Who drives your revenue" tip={BLOCK_TEXT.revenueShare}>
         <div className="chart" style={{ height: 300 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 4 }} barGap={6}>
@@ -96,7 +98,7 @@ export default function ClvResults({ data }) {
         </div>
       </Block>
 
-      <Block title="Customer list" subtitle="Search, sort, filter and download.">
+      <Block title="Customer list">
         <DataTable
           columns={columns}
           rows={customers}
@@ -107,9 +109,6 @@ export default function ClvResults({ data }) {
           downloadName="customer-segments.csv"
           initialSort={{ key: "total_spend", direction: "desc" }}
         />
-        <p className="muted small-print">
-          Score: Recency, Frequency and Monetary value, each from 1 (lowest) to 5 (highest). For example, 5-4-3 means Recency 5, Frequency 4 and Monetary value 3.
-        </p>
       </Block>
       <Notes items={warnings} />
     </div>

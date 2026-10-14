@@ -2,6 +2,8 @@ import { useMemo } from "react";
 import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { compactNumber, formatMonth, formatNumber } from "../lib/format.js";
 import { Block, DataTable, KpiCard, KpiRow, Notes } from "../components/ui.jsx";
+import Tip from "../components/Tip.jsx";
+import { TERMS } from "../content/text.js";
 
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
@@ -72,6 +74,7 @@ export default function ForecastResults({ data }) {
             label="Forecast accuracy"
             value={`${accuracy.accuracy_pct.toFixed(0)}%`}
             sub="tested on past data"
+            tip={TERMS.forecastAccuracy.meaning}
           />
         ) : (
           <KpiCard label="Forecast accuracy" value="Not available" sub="Needs 18 months of history" />
@@ -79,7 +82,7 @@ export default function ForecastResults({ data }) {
         <KpiCard label="History used" value={`${kpis.history_months} months`} sub={`${formatMonth(kpis.history_start)} to ${formatMonth(kpis.history_end)}`} />
       </KpiRow>
 
-      <Block title="Sales history and forecast" subtitle="The shaded area is the likely range.">
+      <Block title="Sales history and forecast">
         <div className="chart" style={{ height: 360 }}>
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={chartData} margin={{ top: 10, right: 16, left: 0, bottom: 4 }}>
@@ -100,7 +103,7 @@ export default function ForecastResults({ data }) {
         </div>
       </Block>
 
-      <Block title="Forecast by month" subtitle="Low and high estimates mark the likely range.">
+      <Block title="Forecast by month" tip={TERMS.likelyRange.meaning}>
         <DataTable columns={forecastColumns} rows={forecast} pageSize={12} downloadName="sales-forecast.csv" initialSort={{ key: "month", direction: "asc" }} />
       </Block>
 
@@ -116,27 +119,45 @@ export default function ForecastResults({ data }) {
               </thead>
               <tbody>
                 <tr>
-                  <td>Weighted absolute percentage error</td>
+                  <td>
+                    Weighted absolute percentage error
+                    <Tip text={TERMS.wape.meaning} label="About Weighted absolute percentage error" />
+                  </td>
                   <td className="num">{accuracy.wape_pct.toFixed(1)}%</td>
                 </tr>
                 <tr>
-                  <td>Mean absolute percentage error</td>
+                  <td>
+                    Mean absolute percentage error
+                    <Tip text={TERMS.mape.meaning} label="About Mean absolute percentage error" />
+                  </td>
                   <td className="num">{accuracy.mape_pct === null ? "n/a" : `${accuracy.mape_pct.toFixed(1)}%`}</td>
                 </tr>
                 <tr>
-                  <td>Mean absolute error</td>
+                  <td>
+                    Mean absolute error
+                    <Tip text={TERMS.mae.meaning} label="About Mean absolute error" />
+                  </td>
                   <td className="num">{formatNumber(accuracy.mae)}</td>
                 </tr>
                 <tr>
-                  <td>Root mean squared error</td>
+                  <td>
+                    Root mean squared error
+                    <Tip text={TERMS.rmse.meaning} label="About Root mean squared error" />
+                  </td>
                   <td className="num">{formatNumber(accuracy.rmse)}</td>
                 </tr>
                 <tr>
-                  <td>Bias</td>
+                  <td>
+                    Bias
+                    <Tip text={TERMS.bias.meaning} label="About Bias" />
+                  </td>
                   <td className="num">{`${accuracy.bias_pct > 0 ? "+" : ""}${accuracy.bias_pct.toFixed(1)}%`}</td>
                 </tr>
                 <tr>
-                  <td>Benchmark error (same month last year)</td>
+                  <td>
+                    Benchmark error (same month last year)
+                    <Tip text={TERMS.benchmark.meaning} label="About Benchmark error" />
+                  </td>
                   <td className="num">{accuracy.benchmark_wape_pct.toFixed(1)}%</td>
                 </tr>
               </tbody>

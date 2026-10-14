@@ -14,7 +14,6 @@ export const MODES = [
     title: "Customer Lifetime Value",
     shortTitle: "Customer Lifetime Value",
     icon: "clv",
-    subtitle: "Groups customers by how recently, how often and how much they buy.",
     info: {
       bullets: [
         "Shows what each customer has spent and which customers matter most.",
@@ -35,7 +34,6 @@ export const MODES = [
     title: "Product Recommendation",
     shortTitle: "Product Recommendation",
     icon: "recommendation",
-    subtitle: "Suggests up to five products for each customer.",
     info: {
       bullets: [
         "Suggests the products to offer each customer next.",
@@ -54,7 +52,6 @@ export const MODES = [
     title: "Market Basket Analysis",
     shortTitle: "Market Basket Analysis",
     icon: "basket",
-    subtitle: "Finds products that are often bought together.",
     info: {
       bullets: [
         "Shows which products appear in the same order.",
@@ -73,7 +70,6 @@ export const MODES = [
     title: "Forecasting",
     shortTitle: "Forecasting",
     icon: "forecast",
-    subtitle: "Predicts monthly sales, with a likely range.",
     info: {
       bullets: [
         "Predicts sales for the coming months from your sales history.",

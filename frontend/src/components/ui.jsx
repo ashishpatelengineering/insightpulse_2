@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { downloadCsv } from "../lib/csv.js";
 import { DownloadIcon } from "./Icons.jsx";
+import Tip from "./Tip.jsx";
 
 export function Spinner({ label }) {
   return (
@@ -20,10 +21,13 @@ export function Alert({ children, tone = "error", action }) {
   );
 }
 
-export function KpiCard({ label, value, sub, tone, help }) {
+export function KpiCard({ label, value, sub, tone, tip }) {
   return (
-    <div className="kpi" title={help}>
-      <div className="kpi-label">{label}</div>
+    <div className="kpi">
+      <div className="kpi-label">
+        {label}
+        {tip && <Tip text={tip} label={`About ${label}`} />}
+      </div>
       <div className={`kpi-value${tone ? ` tone-${tone}` : ""}`}>{value}</div>
       {sub && <div className="kpi-sub">{sub}</div>}
     </div>
@@ -62,12 +66,15 @@ export function Notes({ items }) {
   );
 }
 
-export function Block({ title, subtitle, actions, children }) {
+export function Block({ title, subtitle, tip, actions, children }) {
   return (
     <section className="block">
       <div className="block-head">
         <div>
-          <h3 className="block-title">{title}</h3>
+          <h3 className="block-title">
+            {title}
+            {tip && <Tip text={tip} label={`About ${title}`} />}
+          </h3>
           {subtitle && <p className="muted">{subtitle}</p>}
         </div>
         {actions}
@@ -188,12 +195,15 @@ export function DataTable({ columns, rows, pageSize = 10, searchLabel, searchTex
                     className={column.align === "right" ? "num" : ""}
                     aria-sort={active ? (sort.direction === "asc" ? "ascending" : "descending") : "none"}
                   >
-                    <button type="button" className={`th-button${active ? " active" : ""}`} onClick={() => toggleSort(column.key)}>
-                      {column.label}
-                      <span className="sort-mark" aria-hidden="true">
-                        {active ? (sort.direction === "asc" ? "▲" : "▼") : "⇅"}
-                      </span>
-                    </button>
+                    <div className="th-inner">
+                      <button type="button" className={`th-button${active ? " active" : ""}`} onClick={() => toggleSort(column.key)}>
+                        {column.label}
+                        <span className="sort-mark" aria-hidden="true">
+                          {active ? (sort.direction === "asc" ? "▲" : "▼") : "⇅"}
+                        </span>
+                      </button>
+                      {column.tip && <Tip text={column.tip} label={`About ${column.label}`} />}
+                    </div>
                   </th>
                 );
               })}

@@ -1,6 +1,6 @@
 # InsightPulse
 
-[InsightPulse](https://insightpulse-2-d21f.onrender.com/clv) turns a sales CSV file into business insights. Download a sample dataset or use your own CSV file, upload it, check the column matches, and click Analyze. One uploaded file is used by all four analyses and is shown in a scrolling table.
+A web app that turns a sales CSV file into business insights. Download a sample dataset or use your own CSV file, upload it, check the column matches, and click Analyze. One uploaded file is used by all four analyses and is shown in a scrolling table.
 
 Front end: React, Vite and Recharts. Back end: FastAPI with pandas, scipy and statsmodels.
 
@@ -13,7 +13,7 @@ Front end: React, Vite and Recharts. Back end: FastAPI with pandas, scipy and st
 | Market Basket Analysis | Which products are bought together? | Product, Order |
 | Forecasting | What will monthly sales be over the next 1 to 36 months? | Sales, Date, Group (optional) |
 
-The Help page lists the analyses and explains every abbreviation.
+The Help page has a worked example for each analysis and explains every abbreviation.
 
 ## Methods
 

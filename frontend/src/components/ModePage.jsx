@@ -96,7 +96,6 @@ export default function ModePage({ mode }) {
             {mode.title}
             <InfoPopover info={mode.info} modeTitle={mode.title} />
           </h1>
-          <p className="page-subtitle">{mode.subtitle}</p>
         </div>
         <DatasetBar />
       </div>

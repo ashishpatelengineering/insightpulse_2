@@ -61,7 +61,7 @@ function rankTable(rows, rankKey, valueKey, scoreKey, formatValue, n) {
   return rows
     .slice()
     .sort((a, b) => a[rankKey] - b[rankKey])
-    .map((c) => [c.name, formatValue(c[valueKey]), String(c[rankKey]), `(${c[rankKey]} ÷ ${n}) × 5 = ${((c[rankKey] * 5) / n).toFixed(1)}`, `**${c[scoreKey]}**`]);
+    .map((c) => [c.name, formatValue(c[valueKey]), String(c[rankKey]), `${c[rankKey]} ÷ ${n} × 5 = ${((c[rankKey] * 5) / n).toFixed(1)}`, `**${c[scoreKey]}**`]);
 }
 
 function buildClvExample() {
@@ -92,7 +92,7 @@ function buildClvExample() {
         text: [
           "The three measures are Recency (R), the days since the last purchase, Frequency (F), the number of orders, and Monetary value (M), the total spend. Together they are known as RFM.",
           `For each measure, customers are ranked from weakest to strongest. Rank 1 is the weakest customer and rank ${n} is the strongest. The rank becomes a score from 1 to 5:`,
-          `**Score = (rank ÷ ${n} customers) × 5, rounded up to a whole number**`,
+          `**Score = rank ÷ ${n} customers × 5, rounded up to a whole number**`,
         ],
       },
       {

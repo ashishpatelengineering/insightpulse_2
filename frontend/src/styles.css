@@ -317,3 +317,5 @@ button:disabled { cursor: not-allowed; }
 .example .table-scroll { border: 1px solid var(--line); border-radius: 8px; }
 .segment-card header { min-height: 46px; }
 .segment-card .stat-list dt, .segment-card .stat-list dd { white-space: nowrap; }
+
+.help-card { scroll-margin-top: 68px; }

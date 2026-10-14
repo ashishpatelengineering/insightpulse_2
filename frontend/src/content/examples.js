@@ -90,7 +90,7 @@ function buildClvExample() {
       {
         title: "Rank the customers on three measures",
         text: [
-          "The three measures are Recency (days since the last purchase), Frequency (number of orders) and Monetary value (total spend). Together they are known as RFM.",
+          "The three measures are Recency (R), the days since the last purchase, Frequency (F), the number of orders, and Monetary value (M), the total spend. Together they are known as RFM.",
           `For each measure, customers are ranked from weakest to strongest. Rank 1 is the weakest customer and rank ${n} is the strongest. The rank becomes a score from 1 to 5:`,
           `**Score = rank ÷ ${n} customers × 5, rounded up to a whole number**`,
         ],
@@ -99,7 +99,7 @@ function buildClvExample() {
         title: "Recency rank and score",
         text: ["A longer gap since the last purchase gives a lower rank."],
         table: {
-          head: ["Customer", "Days since last purchase", "Rank", "Calculation", "Recency score"],
+          head: ["Customer", "Days since last purchase", "Rank", "Calculation", "R score"],
           align: ["left", "right", "right", "left", "right"],
           rows: rankTable(rows, "rankR", "days", "r", (v) => String(v), n),
         },
@@ -108,7 +108,7 @@ function buildClvExample() {
         title: "Frequency rank and score",
         text: ["Fewer orders give a lower rank."],
         table: {
-          head: ["Customer", "Orders", "Rank", "Calculation", "Frequency score"],
+          head: ["Customer", "Orders", "Rank", "Calculation", "F score"],
           align: ["left", "right", "right", "left", "right"],
           rows: rankTable(rows, "rankF", "orders", "f", (v) => String(v), n),
         },
@@ -117,38 +117,28 @@ function buildClvExample() {
         title: "Monetary value rank and score",
         text: ["Lower total spend gives a lower rank."],
         table: {
-          head: ["Customer", "Total spend", "Rank", "Calculation", "Monetary score"],
+          head: ["Customer", "Total spend", "Rank", "Calculation", "M score"],
           align: ["left", "right", "right", "left", "right"],
           rows: rankTable(rows, "rankM", "spend", "m", (v) => money(v), n),
         },
       },
       {
         title: "Combine Frequency and Monetary value",
-        text: ["The Frequency score and the Monetary score are averaged into one number, the F and M average."],
+        text: ["The F score and the M score are averaged into one number, the F and M average."],
         table: {
-          head: ["Customer", "Recency score", "Frequency score", "Monetary score", "F and M average"],
+          head: ["Customer", "R score", "F score", "M score", "F and M average"],
           align: ["left", "right", "right", "right", "left"],
           rows: rows.map((c) => [c.name, String(c.r), String(c.f), String(c.m), `(${c.f} + ${c.m}) ÷ 2 = **${c.fm.toFixed(1)}**`]),
         },
       },
       {
         title: "Place each customer in a group",
-        text: ["The rules are checked in this order. The first rule that fits decides the group."],
-        table: {
-          head: ["Order", "Group", "Rule"],
-          align: ["right", "left", "left"],
-          rows: [
-            ["1", "Champions", "Recency 4 or 5, and F and M average 4 or more"],
-            ["2", "Loyal Customers", "Recency 3 or more, and F and M average 3 or more"],
-            ["3", "Promising Customers", "Recency 3 or more"],
-            ["4", "At Risk", "Recency below 3, and F and M average 3 or more"],
-            ["5", "Hibernating", "Everyone else"],
-          ],
-        },
+        text: ["Each combination of R score and F and M average belongs to one group. Find the customer's R score across the top and the F and M average down the side."],
+        grid: true,
         table2: {
-          head: ["Customer", "Recency", "F and M average", "Rule that fits", "Group"],
-          align: ["left", "right", "right", "right", "left"],
-          rows: rows.map((c) => [c.name, String(c.r), c.fm.toFixed(1), String(c.rule), `**${c.segment}**`]),
+          head: ["Customer", "R score", "F and M average", "Group"],
+          align: ["left", "right", "right", "left"],
+          rows: rows.map((c) => [c.name, String(c.r), c.fm.toFixed(1), `**${c.segment}**`]),
         },
       },
       {

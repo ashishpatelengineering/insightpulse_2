@@ -1,8 +1,9 @@
 import { useEffect, useId, useState } from "react";
 import { MODES } from "../modes/config.js";
-import { SEGMENTS, TERMS, TERM_GROUPS } from "../content/text.js";
+import { SCORE_ROWS, SEGMENTS, TERMS, TERM_GROUPS } from "../content/text.js";
 import { EXAMPLES } from "../content/examples.js";
 import { ExampleBody, ExampleButton } from "./Example.jsx";
+import GroupGrid from "./GroupGrid.jsx";
 
 const QUESTIONS = {
   clv: {
@@ -41,14 +42,56 @@ function AnalysisSection({ mode }) {
       {open && <ExampleBody example={EXAMPLES[mode.id]} id={id} />}
       {mode.id === "clv" && (
         <>
+          <h3>How customers are scored</h3>
+          <p className="muted">Each customer receives three scores from 1 (lowest) to 5 (highest), known together as RFM.</p>
+          <div className="table-scroll">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Score</th>
+                  <th>What it measures</th>
+                  <th>Score of 5</th>
+                  <th>Score of 1</th>
+                </tr>
+              </thead>
+              <tbody>
+                {SCORE_ROWS.map(([name, measures, five, one]) => (
+                  <tr key={name}>
+                    <td>
+                      <strong>{name}</strong>
+                    </td>
+                    <td>{measures}</td>
+                    <td>{five}</td>
+                    <td>{one}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           <h3>Customer groups</h3>
-          <ul>
-            {SEGMENTS.map((segment) => (
-              <li key={segment.name}>
-                <strong>{segment.name}.</strong> {segment.text}
-              </li>
-            ))}
-          </ul>
+          <div className="table-scroll">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Customer group</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                {SEGMENTS.map((segment) => (
+                  <tr key={segment.name}>
+                    <td>
+                      <strong>{segment.name}</strong>
+                    </td>
+                    <td>{segment.text}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <h3>Which group a customer belongs to</h3>
+          <p className="muted">The F and M average is the average of the F score and the M score. Each combination belongs to one group.</p>
+          <GroupGrid />
         </>
       )}
       <h3>Abbreviations and terms</h3>

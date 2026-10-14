@@ -1,3 +1,5 @@
+import GroupGrid from "./GroupGrid.jsx";
+
 function Rich({ text }) {
   const parts = String(text).split(/\*\*(.+?)\*\*/g);
   return parts.map((part, i) => (i % 2 === 1 ? <strong key={i}>{part}</strong> : part));
@@ -45,6 +47,7 @@ function Step({ step, number }) {
         </p>
       ))}
       {step.table && <ExampleTable table={step.table} />}
+      {step.grid && <GroupGrid />}
       {step.table2 && <ExampleTable table={step.table2} />}
       {step.after?.map((paragraph) => (
         <p key={paragraph}>

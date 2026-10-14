@@ -2,15 +2,7 @@ import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAx
 import { formatDate, formatNumber } from "../lib/format.js";
 import { Block, DataTable, KpiCard, KpiRow, Notes } from "../components/ui.jsx";
 import Tip from "../components/Tip.jsx";
-import { BLOCK_TEXT, SEGMENT_TEXT, TERMS } from "../content/text.js";
-
-const SEGMENT_COLORS = {
-  Champions: "#1e3a5f",
-  "Loyal Customers": "#6384ab",
-  "Promising Customers": "#4a8f8a",
-  "At Risk": "#b7791f",
-  Hibernating: "#98a3b0",
-};
+import { BLOCK_TEXT, SEGMENT_COLORS, SEGMENT_TEXT, TERMS } from "../content/text.js";
 
 function SegmentCard({ segment }) {
   const color = SEGMENT_COLORS[segment.segment];

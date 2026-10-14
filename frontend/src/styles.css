@@ -319,3 +319,17 @@ button:disabled { cursor: not-allowed; }
 .segment-card .stat-list dt, .segment-card .stat-list dd { white-space: nowrap; }
 
 .help-card { scroll-margin-top: 68px; }
+
+/* Customer group grid */
+.group-grid { border-collapse: separate; border-spacing: 4px; width: 100%; min-width: 640px; table-layout: fixed; }
+.group-grid th { background: none; border: none; font-size: 12.5px; font-weight: 600; color: var(--muted); padding: 2px 4px; text-align: center; white-space: nowrap; }
+.group-grid th.axis, .group-grid th.rowh, .group-grid th.side span { color: var(--ink); }
+.group-grid th.side { padding: 0; }
+.group-grid th.side span { display: inline-block; writing-mode: vertical-rl; transform: rotate(180deg); }
+.group-grid th.rowh { text-align: right; padding-right: 8px; }
+.group-grid td { border-radius: 6px; text-align: center; font-weight: 600; font-size: 12.5px; height: 38px; padding: 0 6px; white-space: nowrap; }
+.cell-champions { background: #1e3a5f22; color: #1e3a5f; }
+.cell-loyal { background: #6384ab22; color: #3f6590; }
+.cell-promising { background: #4a8f8a22; color: #2f6e69; }
+.cell-atrisk { background: #b7791f22; color: #9a6418; }
+.cell-hibernating { background: #98a3b033; color: #5d6875; }

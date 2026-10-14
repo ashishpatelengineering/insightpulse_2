@@ -132,3 +132,28 @@ export const TERM_GROUPS = {
   basket: ["support", "confidence", "lift"],
   forecast: ["ets", "stl", "wape", "mape", "mae", "rmse", "bias", "benchmark"],
 };
+
+/** Customer Lifetime Value: how scores are explained and how groups are assigned. */
+export const SCORE_ROWS = [
+  ["Recency (R)", "Days since the customer's last purchase", "Bought most recently", "Bought longest ago"],
+  ["Frequency (F)", "Number of orders", "Most orders", "Fewest orders"],
+  ["Monetary value (M)", "Total spend", "Highest spend", "Lowest spend"],
+];
+
+/** Each row is a band of the F and M average. Each column is an R score from 1 to 5. */
+export const GROUP_GRID = {
+  bands: ["4 to 5", "3 to 3.5", "1 to 2.5"],
+  rows: [
+    ["At Risk", "At Risk", "Loyal Customers", "Champions", "Champions"],
+    ["At Risk", "At Risk", "Loyal Customers", "Loyal Customers", "Loyal Customers"],
+    ["Hibernating", "Hibernating", "Promising Customers", "Promising Customers", "Promising Customers"],
+  ],
+};
+
+export const SEGMENT_COLORS = {
+  Champions: "#1e3a5f",
+  "Loyal Customers": "#6384ab",
+  "Promising Customers": "#4a8f8a",
+  "At Risk": "#b7791f",
+  Hibernating: "#98a3b0",
+};
